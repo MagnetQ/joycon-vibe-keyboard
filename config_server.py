@@ -20,7 +20,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 PORT = 8766
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(DIR, "config.json")
-HTML_FILE = os.path.join(DIR, "joycon_config.html")
+HTML_FILE = os.path.join(DIR, "web", "joycon_config.html")
 STATUS_FILE = os.path.join(DIR, "status.json")
 PYTHON3 = shutil.which("python3") or "/usr/bin/env"
 MAPPER_SCRIPT = os.path.join(DIR, "joycon_mapper.py")

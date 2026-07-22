@@ -127,12 +127,18 @@ joycon-vibe-keyboard/
 ├── joycon_mapper.py      # Main script - reads HID, simulates keyboard
 ├── config.json           # Button mapping configuration
 ├── config_server.py      # Optional web config server (port 8766)
-├── joycon_config.html    # Interactive web config page
-├── keymap.html           # Static reference page showing current mappings
 ├── joycon_watchdog.py    # Optional Bluetooth reconnect watchdog (blueutil)
-├── DESIGN.md             # Architecture and design document (Chinese)
-├── test_buttons.py       # Debug utility for button press detection
-├── debug_stick.py        # Debug utility for analog stick values
+├── web/
+│   ├── joycon_config.html  # Interactive web config page
+│   └── keymap.html         # Static reference page showing current mappings
+├── tools/
+│   ├── test_buttons.py     # Debug utility for button press detection
+│   └── debug_stick.py      # Debug utility for analog stick values
+├── assets/
+│   ├── project-overview.png
+│   └── vibe-coding-poster.png
+├── docs/
+│   └── DESIGN.md           # Architecture and design document (Chinese)
 └── README.md             # This file
 ```
 
