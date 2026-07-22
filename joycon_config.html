@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joy-Con Mapper</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050510;--panel:rgba(8,8,24,.92);--card:rgba(15,15,40,.7);--card-h:rgba(25,25,60,.85);
+  --border:rgba(0,240,255,.12);--border-h:rgba(0,240,255,.35);
+  --neon:#00f0ff;--neon-dim:rgba(0,240,255,.15);--neon-glow:rgba(0,240,255,.4);
+  --accent:#ff2d6b;--accent-dim:rgba(255,45,107,.12);--accent-glow:rgba(255,45,107,.5);
+  --ok:#00ff88;--ok-dim:rgba(0,255,136,.1);--ok-glow:rgba(0,255,136,.4);
+  --purple:#b44dff;--purple-dim:rgba(180,77,255,.12);--purple-glow:rgba(180,77,255,.4);
+  --txt:#e0e8ff;--txt2:#7088aa;--txt3:#3a4466;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+  background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;
+}
+
+/* ── Animated grid background ── */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,240,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,240,255,.03) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:gridMove 20s linear infinite;
+}
+@keyframes gridMove{from{background-position:0 0}to{background-position:60px 60px}}
+
+/* ── Scanline overlay ── */
+body::after{
+  content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:repeating-linear-gradient(
+    0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px
+  );
+}
+
+/* ── Ambient glow spots ── */
+.ambient{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 20%,rgba(0,240,255,.04),transparent),
+    radial-gradient(ellipse 500px 500px at 80% 70%,rgba(255,45,107,.04),transparent),
+    radial-gradient(ellipse 400px 300px at 50% 90%,rgba(180,77,255,.03),transparent);
+}
+
+/* ── Topbar ── */
+.topbar{
+  position:relative;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 28px;
+  background:var(--panel);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.topbar::after{
+  content:"";position:absolute;bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--neon),var(--accent),var(--purple),transparent);
+  opacity:.6;
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--neon),var(--accent));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:17px;
+  box-shadow:0 0 20px var(--neon-dim),0 0 40px rgba(0,240,255,.1);
+}
+.topbar-title{font-size:16px;font-weight:800;color:#fff;letter-spacing:.5px}
+.topbar-sub{
+  font-size:9px;color:var(--neon);text-transform:uppercase;
+  letter-spacing:2.5px;margin-top:2px;font-weight:600;
+  text-shadow:0 0 10px var(--neon-glow);
+}
+.topbar-right{display:flex;align-items:center;gap:14px}
+
+.badge{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:20px;
+  font-size:11px;font-weight:600;letter-spacing:.3px;
+  transition:all .3s;
+}
+.badge .badge-dot{width:7px;height:7px;border-radius:50%}
+
+.badge.ok{
+  background:var(--ok-dim);border:1px solid rgba(0,255,136,.25);color:var(--ok);
+}
+.badge.ok .badge-dot{background:var(--ok);box-shadow:0 0 8px var(--ok-glow);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.badge.off{background:var(--accent-dim);border:1px solid rgba(255,45,107,.2);color:var(--accent)}
+.badge.off .badge-dot{background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+
+.badge.warn{background:rgba(255,200,0,.08);border:1px solid rgba(255,200,0,.25);color:#ffc800}
+.badge.warn .badge-dot{background:#ffc800;box-shadow:0 0 8px rgba(255,200,0,.4)}
+
+.autostart-wrap{display:flex;align-items:center;gap:8px}
+.autostart-label{font-size:11px;color:var(--txt2);white-space:nowrap;font-weight:500}
+.toggle{position:relative;display:inline-block;width:38px;height:20px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:rgba(60,60,120,.4);border-radius:20px;transition:all .3s;border:1px solid rgba(0,240,255,.1)}
+.toggle-track::after{content:"";position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;left:3px;transition:all .3s;box-shadow:0 0 6px rgba(0,240,255,.3)}
+.toggle input:checked+.toggle-track{background:rgba(0,255,136,.2);border-color:rgba(0,255,136,.4);box-shadow:0 0 15px var(--ok-dim)}
+.toggle input:checked+.toggle-track::after{left:19px;background:var(--ok);box-shadow:0 0 10px var(--ok-glow)}
+
+/* ── Main ── */
+.main{position:relative;z-index:1;display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 60px)}
+@media(max-width:860px){.main{grid-template-columns:1fr}.ctrl-panel{display:none}}
+
+/* ── Controller Panel ── */
+.ctrl-panel{
+  background:var(--panel);backdrop-filter:blur(15px);
+  border-right:1px solid var(--border);
+  padding:24px 16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+}
+.ctrl-svg{
+  width:250px;cursor:default;
+  filter:drop-shadow(0 0 40px rgba(0,240,255,.08)) drop-shadow(0 0 80px rgba(180,77,255,.05));
+}
+.ctrl-hint{
+  font-size:10px;color:var(--txt3);text-align:center;line-height:1.8;
+  letter-spacing:.5px;text-transform:uppercase;
+}
+
+/* SVG button styles */
+.btn-grp{cursor:pointer}
+.btn-grp:hover .btn-shape{filter:brightness(1.8) drop-shadow(0 0 12px var(--neon-glow));stroke-width:2.5}
+.btn-grp:hover text{fill:var(--neon)!important}
+.btn-shape{transition:filter .2s,stroke-width .2s}
+.btn-grp.active .btn-shape{
+  stroke:var(--neon)!important;stroke-width:3;
+  filter:brightness(2) drop-shadow(0 0 16px var(--neon-glow));
+}
+.btn-grp.active text{fill:var(--neon)!important}
+
+/* ── Config Panel ── */
+.cfg-panel{padding:20px 32px 32px;overflow-y:auto;max-height:calc(100vh - 60px)}
+.cfg-header{margin-bottom:16px}
+.cfg-title{
+  font-size:18px;font-weight:800;color:#fff;letter-spacing:.5px;
+  text-shadow:0 0 20px rgba(0,240,255,.15);
+}
+.cfg-desc{font-size:11px;color:var(--txt2);margin-top:4px}
+.group{margin-bottom:18px}
+.group-title{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+  color:var(--neon);margin-bottom:8px;padding-bottom:6px;
+  border-bottom:1px solid rgba(0,240,255,.1);
+  text-shadow:0 0 10px var(--neon-dim);
+}
+
+/* ── Cards ── */
+.card{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 16px;
+  background:var(--card);backdrop-filter:blur(8px);
+  border:1px solid var(--border);border-radius:12px;
+  margin-bottom:6px;cursor:pointer;
+  transition:all .25s;position:relative;overflow:hidden;
+}
+.card::before{
+  content:"";position:absolute;inset:0;border-radius:12px;
+  background:linear-gradient(135deg,transparent 40%,rgba(0,240,255,.03) 50%,transparent 60%);
+  opacity:0;transition:opacity .3s;
+}
+.card:hover{
+  background:var(--card-h);border-color:var(--border-h);
+  transform:translateX(3px);
+  box-shadow:0 0 20px var(--neon-dim),-4px 0 15px var(--neon-dim);
+}
+.card:hover::before{opacity:1}
+.card.highlight{
+  border-color:rgba(0,240,255,.5);background:var(--card-h);
+  box-shadow:0 0 25px var(--neon-dim),inset 0 0 20px rgba(0,240,255,.03);
+}
+.card-name{width:82px;flex-shrink:0}
+.card-name strong{font-size:13px;color:#fff;display:block;font-weight:700}
+.card-name span{font-size:10px;color:var(--txt3)}
+.card-arrow{color:var(--txt3);font-size:12px;flex-shrink:0}
+.card-bind{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.bind-tag{
+  padding:3px 10px;border-radius:6px;
+  font-size:12px;font-weight:700;white-space:nowrap;letter-spacing:-.2px;
+}
+.bind-tag.mod{
+  background:var(--purple-dim);border:1px solid rgba(180,77,255,.3);color:var(--purple);
+  box-shadow:0 0 8px rgba(180,77,255,.1);
+}
+.bind-tag.key{
+  background:var(--ok-dim);border:1px solid rgba(0,255,136,.25);color:var(--ok);
+  box-shadow:0 0 8px rgba(0,255,136,.08);
+}
+.bind-plus{color:var(--txt3);font-size:11px}
+.card-note{font-size:10px;color:var(--txt3);width:72px;text-align:right;flex-shrink:0}
+.card-edit{color:var(--neon);font-size:14px;flex-shrink:0;opacity:0;transition:opacity .2s;text-shadow:0 0 8px var(--neon-glow)}
+.card:hover .card-edit{opacity:1}
+
+/* ── Modal ── */
+.overlay{position:fixed;inset:0;background:rgba(2,2,10,.8);backdrop-filter:blur(16px);z-index:200;display:none;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{
+  background:rgba(10,10,30,.96);backdrop-filter:blur(24px);
+  border:1px solid rgba(0,240,255,.2);border-radius:20px;
+  width:420px;max-width:92vw;padding:30px;
+  animation:modalIn .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 60px rgba(0,240,255,.08),0 0 120px rgba(180,77,255,.05),0 30px 60px rgba(0,0,0,.5);
+  position:relative;overflow:hidden;
+}
+.modal::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--neon),var(--accent),var(--purple));
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.modal-head h2{font-size:18px;font-weight:800;color:#fff;letter-spacing:.3px}
+.modal-close{background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:all .2s}
+.modal-close:hover{background:rgba(255,45,107,.1);color:var(--accent);text-shadow:0 0 10px var(--accent-glow)}
+.modal-field{margin-bottom:18px}
+.modal-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--neon);margin-bottom:8px;display:block;text-shadow:0 0 8px var(--neon-dim)}
+.sel{
+  width:100%;padding:11px 14px;
+  background:rgba(5,5,20,.9);border:1px solid rgba(0,240,255,.15);
+  border-radius:10px;color:#fff;font-size:13px;
+  cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath fill='%2300f0ff' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+  padding-right:34px;transition:all .2s;
+}
+.sel:focus{outline:none;border-color:var(--neon);box-shadow:0 0 0 3px var(--neon-dim),0 0 20px var(--neon-dim)}
+.sel option{background:#0a0a20;color:#fff}
+.modal-actions{display:flex;gap:10px;margin-top:26px}
+.btn{padding:11px 24px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;letter-spacing:.3px}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),#cc1155);color:#fff;
+  box-shadow:0 4px 20px var(--accent-dim),0 0 30px rgba(255,45,107,.15);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--accent-glow),0 0 50px rgba(255,45,107,.2)}
+.btn-ghost{background:transparent;color:var(--txt2);border:1px solid rgba(0,240,255,.15)}
+.btn-ghost:hover{background:rgba(0,240,255,.05);color:var(--neon);border-color:rgba(0,240,255,.3)}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:30px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:rgba(0,255,136,.95);color:#050510;
+  padding:13px 30px;border-radius:12px;
+  font-size:13px;font-weight:700;letter-spacing:.3px;
+  opacity:0;transition:all .4s cubic-bezier(.4,0,.2,1);
+  z-index:1000;pointer-events:none;
+  box-shadow:0 0 30px var(--ok-glow),0 10px 40px rgba(0,255,136,.2);
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{background:rgba(255,45,107,.95);box-shadow:0 0 30px var(--accent-glow),0 10px 40px rgba(255,45,107,.2)}
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<!-- ═══ Topbar ═══ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-icon">🎮</div>
+    <div>
+      <div class="topbar-title">Joy-Con Mapper</div>
+      <div class="topbar-sub">Vibe Coding</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="badge ok" id="serverBadge"><div class="badge-dot"></div>服务器运行中</div>
+    <div class="badge off" id="connBadge"><div class="badge-dot"></div><span id="connText">手柄离线</span></div>
+    <div class="autostart-wrap">
+      <span class="autostart-label">开机自启</span>
+      <label class="toggle"><input type="checkbox" id="autostartToggle" onchange="toggleAutostart(this.checked)"><span class="toggle-track"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Main ═══ -->
+<div class="main">
+
+  <!-- Left: Interactive Controller -->
+  <div class="ctrl-panel">
+    <svg class="ctrl-svg" viewBox="0 -30 280 530" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#12122e"/>
+          <stop offset="100%" stop-color="#080818"/>
+        </linearGradient>
+        <linearGradient id="stickGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0e0e28"/>
+          <stop offset="100%" stop-color="#060612"/>
+        </linearGradient>
+        <filter id="neonGlow">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Controller body -->
+      <rect x="40" y="8" width="200" height="465" rx="100" fill="url(#bodyGrad)" stroke="rgba(0,240,255,.12)" stroke-width="1.5"/>
+
+      <!-- ── ZR ── -->
+      <g class="btn-grp" data-id="ZR">
+        <rect class="btn-shape" x="140" y="-14" width="80" height="24" rx="12" fill="#0e0e28" stroke="rgba(0,240,255,.15)" stroke-width="1.5"/>
+        <text x="180" y="3" text-anchor="middle" fill="#556688" font-size="10" font-weight="700">ZR</text>
+      </g>
+      <!-- ── R ── -->
+      <g class="btn-grp" data-id="R">
+        <rect class="btn-shape" x="148" y="14" width="72" height="22" rx="11" fill="#0e0e28" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="184" y="29" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">R</text>
+      </g>
+
+      <!-- ── Stick ── -->
+      <g class="btn-grp" data-id="stick">
+        <circle cx="140" cy="90" r="36" fill="url(#stickGrad)" stroke="rgba(0,240,255,.1)" stroke-width="1.5"/>
+        <circle cx="140" cy="90" r="22" fill="#060612" stroke="rgba(0,240,255,.15)" stroke-width="1.5"/>
+        <text x="140" y="94" text-anchor="middle" fill="rgba(0,240,255,.25)" font-size="8" font-weight="600">STICK</text>
+        <text x="112" y="94" text-anchor="middle" fill="rgba(0,240,255,.2)" font-size="10">◂</text>
+        <text x="168" y="94" text-anchor="middle" fill="rgba(0,240,255,.2)" font-size="10">▸</text>
+      </g>
+
+      <!-- ── Face buttons ── -->
+      <g class="btn-grp" data-id="X">
+        <circle class="btn-shape" cx="140" cy="185" r="24" fill="#0c0c26" stroke="rgba(0,240,255,.12)" stroke-width="2"/>
+        <text x="140" y="189" text-anchor="middle" fill="rgba(200,210,240,.7)" font-size="12" font-weight="700">X</text>
+      </g>
+      <g class="btn-grp" data-id="Y">
+        <circle class="btn-shape" cx="85" cy="240" r="24" fill="#0c0c26" stroke="rgba(0,240,255,.12)" stroke-width="2"/>
+        <text x="85" y="244" text-anchor="middle" fill="rgba(200,210,240,.7)" font-size="12" font-weight="700">Y</text>
+      </g>
+      <g class="btn-grp" data-id="A">
+        <circle class="btn-shape" cx="195" cy="240" r="24" fill="#0c0c26" stroke="var(--accent)" stroke-width="2"/>
+        <text x="195" y="244" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">A</text>
+      </g>
+      <g class="btn-grp" data-id="B">
+        <circle class="btn-shape" cx="140" cy="295" r="24" fill="#0c0c26" stroke="rgba(0,240,255,.12)" stroke-width="2"/>
+        <text x="140" y="299" text-anchor="middle" fill="rgba(200,210,240,.7)" font-size="12" font-weight="700">B</text>
+      </g>
+
+      <!-- ── System buttons ── -->
+      <g class="btn-grp" data-id="MINUS">
+        <circle class="btn-shape" cx="95" cy="355" r="16" fill="#0c0c26" stroke="rgba(0,240,255,.1)" stroke-width="1.5"/>
+        <text x="95" y="359" text-anchor="middle" fill="rgba(150,160,200,.6)" font-size="13">−</text>
+      </g>
+      <g class="btn-grp" data-id="PLUS">
+        <circle class="btn-shape" cx="185" cy="355" r="16" fill="#0c0c26" stroke="rgba(0,240,255,.1)" stroke-width="1.5"/>
+        <text x="185" y="359" text-anchor="middle" fill="rgba(150,160,200,.6)" font-size="13">+</text>
+      </g>
+
+      <g class="btn-grp" data-id="HOME">
+        <circle class="btn-shape" cx="140" cy="415" r="18" fill="#0c0c26" stroke="rgba(0,240,255,.1)" stroke-width="1.5"/>
+        <text x="140" y="419" text-anchor="middle" fill="rgba(150,160,200,.6)" font-size="12">⌂</text>
+      </g>
+
+      <!-- ── Stick click ── -->
+      <g class="btn-grp" data-id="STICK_CLICK">
+        <rect x="108" y="455" width="64" height="18" rx="9" fill="#0c0c26" stroke="rgba(0,240,255,.08)" stroke-width="1"/>
+        <text x="140" y="467" text-anchor="middle" fill="rgba(100,110,150,.5)" font-size="7">摇杆按下</text>
+      </g>
+
+      <!-- ── Side buttons ── -->
+      <g class="btn-grp" data-id="SL">
+        <rect class="btn-shape" x="6" y="200" width="26" height="52" rx="8" fill="#0c0c26" stroke="rgba(0,240,255,.12)" stroke-width="1.5"/>
+        <text x="19" y="230" text-anchor="middle" fill="rgba(150,160,200,.5)" font-size="7" font-weight="700" transform="rotate(-90 19 230)">SL</text>
+      </g>
+      <g class="btn-grp" data-id="SR">
+        <rect class="btn-shape" x="248" y="200" width="26" height="52" rx="8" fill="#0c0c26" stroke="rgba(0,240,255,.12)" stroke-width="1.5"/>
+        <text x="261" y="230" text-anchor="middle" fill="rgba(150,160,200,.5)" font-size="7" font-weight="700" transform="rotate(-90 261 230)">SR</text>
+      </g>
+    </svg>
+    <p class="ctrl-hint">手柄示意图 · 点击按钮编辑绑定<br>悬停高亮对应卡片</p>
+  </div>
+
+  <!-- Right: Config Panel -->
+  <div class="cfg-panel">
+    <div class="cfg-header">
+      <div class="cfg-title">按键映射配置</div>
+      <div class="cfg-desc">点击卡片或手柄按钮编辑绑定 · 保存后重启 mapper 生效</div>
+    </div>
+    <div id="configCards"></div>
+  </div>
+</div>
+
+<!-- ═══ Edit Modal ═══ -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+  <div class="modal-head">
+    <h2 id="modalTitle">编辑按键</h2>
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+  </div>
+  <div id="modalBody"></div>
+  <div class="modal-actions">
+    <button class="btn btn-primary" onclick="saveFromModal()">保存</button>
+    <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ Toast ═══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Options ──
+const MOD_OPTIONS = [
+  {v:"",l:"无修饰键"},{v:"cmd",l:"⌘ Command"},{v:"cmd+shift",l:"⌘+⇧ Cmd+Shift"},
+  {v:"cmd+alt",l:"⌘+⌥ Cmd+Option"},{v:"shift",l:"⇧ Shift"},{v:"alt",l:"⌥ Option"},
+  {v:"ctrl",l:"⌃ Control"},{v:"cmd+ctrl",l:"⌘+⌃ Cmd+Ctrl"},
+];
+const HOLD_OPTIONS = [
+  {v:"cmd_r",l:"右 Command ⌘"},{v:"cmd_l",l:"左 Command ⌘"},
+  {v:"shift_r",l:"右 Shift ⇧"},{v:"alt_r",l:"右 Option ⌥"},
+  {v:"ctrl_r",l:"右 Control ⌃"},{v:"cmd_r+alt_r",l:"右⌘ + 右⌥"},
+  {v:"cmd_r+shift_r",l:"右⌘ + 右⇧"},{v:"shift_r+alt_r",l:"右⇧ + 右⌥"},
+];
+const KEY_OPTIONS = [
+  {v:"enter",l:"Enter ↵"},{v:"tab",l:"Tab ⇥"},{v:"esc",l:"Escape"},
+  {v:"backspace",l:"Backspace ⌫"},{v:"delete",l:"Delete ⌦"},{v:"space",l:"Space 空格"},
+  {v:"up",l:"↑ 上"},{v:"down",l:"↓ 下"},{v:"left",l:"← 左"},{v:"right",l:"→ 右"},
+  {v:"page_up",l:"Page Up"},{v:"page_down",l:"Page Down"},
+  ...Array.from({length:26},(_,i)=>({v:String.fromCharCode(97+i),l:String.fromCharCode(65+i)})),
+  ...Array.from({length:10},(_,i)=>({v:String(i),l:String(i)})),
+  ...Array.from({length:12},(_,i)=>({v:"f"+(i+1),l:"F"+(i+1)})),
+];
+const STICK_OPTIONS = [
+  {v:"up",l:"↑ 上"},{v:"down",l:"↓ 下"},{v:"left",l:"← 左"},{v:"right",l:"→ 右"},
+  {v:"page_up",l:"Page Up"},{v:"page_down",l:"Page Down"},
+];
+
+const GROUPS = [
+  {title:"修饰键（按住不放）",ids:["R","ZR"],kind:"hold"},
+  {title:"正面按钮",ids:["A","B","X","Y"],kind:"press"},
+  {title:"系统按钮",ids:["PLUS","MINUS","HOME","STICK_CLICK"],kind:"press"},
+  {title:"侧键",ids:["SL","SR"],kind:"press"},
+  {title:"摇杆方向",ids:["stick_left","stick_right"],kind:"stick"},
+];
+
+const NAMES = {
+  R:{name:"R",sub:"肩键",note:"Typeless 语音"},
+  ZR:{name:"ZR",sub:"扳机",note:"双修饰"},
+  A:{name:"A",sub:"大按钮",note:"确认/发送"},
+  B:{name:"B",sub:"下方",note:"撤销"},
+  X:{name:"X",sub:"上方",note:"删除"},
+  Y:{name:"Y",sub:"左方",note:"取消/退出"},
+  PLUS:{name:"PLUS (+)",sub:"加号",note:"接受补全"},
+  MINUS:{name:"MINUS (−)",sub:"减号",note:"全选"},
+  HOME:{name:"HOME",sub:"主页",note:"保存"},
+  STICK_CLICK:{name:"摇杆按下",sub:"点击",note:""},
+  SL:{name:"SL",sub:"左侧",note:"复制"},
+  SR:{name:"SR",sub:"右侧",note:"粘贴"},
+  stick_left:{name:"摇杆推左",sub:"X轴",note:"上一选项"},
+  stick_right:{name:"摇杆推右",sub:"X轴",note:"下一选项"},
+};
+
+// ── Key display helpers ──
+const KEY_DISPLAY = {
+  enter:"Enter",tab:"Tab",esc:"Esc",backspace:"Backspace",delete:"Del",space:"Space",
+  up:"↑",down:"↓",left:"←",right:"→",page_up:"PgUp",page_down:"PgDn",
+  cmd:"⌘",cmd_l:"左⌘",cmd_r:"右⌘",shift:"⇧",shift_l:"左⇧",shift_r:"右⇧",
+  alt:"⌥",alt_l:"左⌥",alt_r:"右⌥",ctrl:"⌃",ctrl_l:"左⌃",ctrl_r:"右⌃",
+};
+function displayName(v){return KEY_DISPLAY[v]||v.toUpperCase()}
+
+// ── State ──
+let config = {modifiers:{R:["cmd_r"],ZR:["cmd_r","alt_r"]},buttons:{},stick:{left:"up",right:"down"}};
+let editingId = null;
+
+// ── Build select HTML ──
+function sel(options,selected,cls,id){
+  let h=`<select class="sel ${cls||""}" ${id?'id="'+id+'"':''}>`;
+  for(const o of options) h+=`<option value="${o.v}"${o.v===selected?" selected":""}>${o.l}</option>`;
+  return h+"</select>";
+}
+
+// ── Render binding tags ──
+function bindTags(id){
+  if(id==="R"||id==="ZR"){
+    const mods=(config.modifiers&&config.modifiers[id])||[];
+    return mods.map(m=>`<span class="bind-tag mod">${displayName(m)}</span>`).join('<span class="bind-plus">+</span>');
+  }
+  if(id==="stick_left"||id==="stick_right"){
+    const dir=id==="stick_left"?"left":"right";
+    const v=(config.stick&&config.stick[dir])||"up";
+    return `<span class="bind-tag key">${displayName(v)}</span>`;
+  }
+  const btn=(config.buttons&&config.buttons[id])||{modifiers:[],key:"enter"};
+  let h="";
+  if(btn.modifiers.length){
+    h+=btn.modifiers.map(m=>`<span class="bind-tag mod">${displayName(m)}</span>`).join('<span class="bind-plus">+</span>');
+    h+='<span class="bind-plus">+</span>';
+  }
+  h+=`<span class="bind-tag key">${displayName(btn.key)}</span>`;
+  return h;
+}
+
+// ── Render cards ──
+function renderCards(){
+  const c=document.getElementById("configCards");
+  let h="";
+  for(const g of GROUPS){
+    h+=`<div class="group"><div class="group-title">${g.title}</div>`;
+    for(const id of g.ids){
+      const n=NAMES[id];
+      h+=`<div class="card" data-id="${id}" onclick="openModal('${id}')" onmouseenter="hlSvg('${id}')" onmouseleave="hlSvg(null)">`;
+      h+=`<div class="card-name"><strong>${n.name}</strong><span>${n.sub}</span></div>`;
+      h+=`<span class="card-arrow">→</span>`;
+      h+=`<div class="card-bind">${bindTags(id)}</div>`;
+      h+=`<div class="card-note">${n.note}</div>`;
+      h+=`<div class="card-edit">✎</div>`;
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+  }
+  c.innerHTML=h;
+}
+
+function updateSvgLabels(){}
+
+// ── Cross-highlight ──
+function hlSvg(id){
+  document.querySelectorAll(".btn-grp").forEach(g=>g.classList.remove("active"));
+  if(id){
+    const g=document.querySelector(`.btn-grp[data-id="${id}"]`);
+    if(g) g.classList.add("active");
+  }
+}
+document.querySelectorAll(".btn-grp").forEach(g=>{
+  g.addEventListener("mouseenter",()=>{
+    const id=g.dataset.id;
+    document.querySelectorAll(".card").forEach(c=>{
+      if(c.dataset.id===id||(id==="stick"&&(c.dataset.id==="stick_left"||c.dataset.id==="stick_right")))
+        c.classList.add("highlight");
+    });
+  });
+  g.addEventListener("mouseleave",()=>{
+    document.querySelectorAll(".card").forEach(c=>c.classList.remove("highlight"));
+  });
+  g.addEventListener("click",()=>{
+    const id=g.dataset.id;
+    if(id==="stick") openModal("stick_left");
+    else openModal(id);
+  });
+});
+
+// ── Modal ──
+function openModal(id){
+  editingId=id;
+  const overlay=document.getElementById("overlay");
+  const title=document.getElementById("modalTitle");
+  const body=document.getElementById("modalBody");
+  const n=NAMES[id];
+  title.textContent=`编辑 ${n?n.name:id}`;
+
+  let h="";
+  if(id==="R"||id==="ZR"){
+    const cur=(config.modifiers&&config.modifiers[id])||[];
+    const curVal=cur.join("+");
+    h+=`<div class="modal-field"><label class="modal-label">按住触发的修饰键</label>`;
+    h+=sel(HOLD_OPTIONS,curVal,"","holdSel");
+    h+=`</div>`;
+    h+=`<p style="font-size:11px;color:var(--txt3);line-height:1.6">按住此键时，其他按钮自动叠加该修饰键。如 R=右⌘，则 R+A = 右⌘+Enter。</p>`;
+  } else if(id==="stick_left"||id==="stick_right"){
+    const dir=id==="stick_left"?"left":"right";
+    const cur=(config.stick&&config.stick[dir])||"up";
+    h+=`<div class="modal-field"><label class="modal-label">推${dir==="left"?"左":"右"}触发的按键</label>`;
+    h+=sel(STICK_OPTIONS,cur,"","stickSel");
+    h+=`</div>`;
+  } else {
+    const btn=(config.buttons&&config.buttons[id])||{modifiers:[],key:"enter"};
+    const modVal=btn.modifiers.join("+")||"";
+    h+=`<div class="modal-field"><label class="modal-label">修饰键（可选）</label>`;
+    h+=sel(MOD_OPTIONS,modVal,"","modSel");
+    h+=`</div>`;
+    h+=`<div class="modal-field"><label class="modal-label">主键</label>`;
+    h+=sel(KEY_OPTIONS,btn.key,"","keySel");
+    h+=`</div>`;
+    h+=`<p style="font-size:11px;color:var(--txt3);line-height:1.6">修饰键 + 主键 = 组合键（如 ⌘+Z = 撤销）。不选修饰键 = 单键。</p>`;
+  }
+  body.innerHTML=h;
+  overlay.classList.add("show");
+}
+
+function closeModal(){
+  document.getElementById("overlay").classList.remove("show");
+  editingId=null;
+}
+
+function saveFromModal(){
+  const id=editingId;
+  if(!id)return;
+  if(id==="R"||id==="ZR"){
+    const v=document.getElementById("holdSel").value;
+    if(!config.modifiers)config.modifiers={};
+    config.modifiers[id]=v.split("+");
+  } else if(id==="stick_left"||id==="stick_right"){
+    const dir=id==="stick_left"?"left":"right";
+    const v=document.getElementById("stickSel").value;
+    if(!config.stick)config.stick={};
+    config.stick[dir]=v;
+  } else {
+    const modV=document.getElementById("modSel").value;
+    const keyV=document.getElementById("keySel").value;
+    if(!config.buttons)config.buttons={};
+    config.buttons[id]={modifiers:modV?modV.split("+"):[],key:keyV};
+  }
+  saveToServer();
+  closeModal();
+}
+
+// ── Save ──
+async function saveToServer(){
+  try{
+    const res=await fetch("/api/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(config,null,2)});
+    if(res.ok) showToast("✓ 配置已保存！重启 mapper 生效",false);
+    else showToast("✗ 保存失败",true);
+  }catch(e){showToast("✗ 无法连接服务器",true)}
+  renderCards();
+}
+
+// ── Toast ──
+function showToast(msg,isErr){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className="toast show"+(isErr?" err":"");
+  setTimeout(()=>t.className="toast",3500);
+}
+
+// ── Autostart ──
+async function checkAutostart(){
+  try{const r=await fetch("/api/autostart");const d=await r.json();document.getElementById("autostartToggle").checked=d.enabled}catch(e){}
+}
+async function toggleAutostart(enable){
+  const t=document.getElementById("autostartToggle");t.disabled=true;
+  try{
+    const r=await fetch("/api/autostart/"+(enable?"enable":"disable"),{method:"POST"});const d=await r.json();
+    if(r.ok) showToast("✓ "+d.message,false);
+    else{showToast("✗ "+d.error,true);t.checked=!enable}
+  }catch(e){showToast("✗ 无法连接服务器",true);t.checked=!enable}
+  t.disabled=false;
+}
+
+// ── Connection status ──
+const CONN_LABELS={connected:"手柄已连接",waiting:"连接中…",disconnected:"已断开",stale:"信号弱",stopped:"已停止",offline:"手柄离线"};
+async function pollStatus(){
+  try{
+    const r=await fetch("/api/status");const d=await r.json();
+    const b=document.getElementById("connBadge");const t=document.getElementById("connText");
+    const s=d.state||"offline";
+    t.textContent=CONN_LABELS[s]||s;
+    if(s==="connected"){b.className="badge ok"}
+    else if(s==="waiting"||s==="stale"){b.className="badge warn"}
+    else{b.className="badge off"}
+  }catch(e){document.getElementById("connText").textContent="状态未知"}
+}
+setInterval(pollStatus,3000);
+
+// ── Init ──
+async function init(){
+  try{
+    const r=await fetch("/api/config");config=await r.json();
+    document.getElementById("serverBadge").className="badge ok";
+  }catch(e){
+    document.getElementById("serverBadge").className="badge off";
+    document.getElementById("serverBadge").innerHTML='<div class="badge-dot"></div>服务器未连接';
+  }
+  renderCards();updateSvgLabels();checkAutostart();pollStatus();
+}
+init();
+</script>
+</body>
+</html>

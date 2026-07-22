@@ -1,0 +1,58 @@
+{
+  "modifiers": {
+    "R": [
+      "cmd_r"
+    ],
+    "ZR": [
+      "cmd_r",
+      "alt_r"
+    ],
+    "SR": [
+      "alt_r"
+    ]
+  },
+  "buttons": {
+    "A": {
+      "modifiers": [],
+      "key": "enter"
+    },
+    "B": {
+      "modifiers": [
+        "cmd"
+      ],
+      "key": "z"
+    },
+    "X": {
+      "modifiers": [],
+      "key": "backspace"
+    },
+    "Y": {
+      "modifiers": [],
+      "key": "esc"
+    },
+    "PLUS": {
+      "modifiers": [],
+      "key": "tab"
+    },
+    "MINUS": {
+      "modifiers": [],
+      "key": "a"
+    },
+    "HOME": {
+      "modifiers": [],
+      "key": "s"
+    },
+    "STICK_CLICK": {
+      "modifiers": [],
+      "key": "d"
+    },
+    "SL": {
+      "modifiers": [],
+      "key": "c"
+    }
+  },
+  "stick": {
+    "left": "up",
+    "right": "down"
+  }
+}

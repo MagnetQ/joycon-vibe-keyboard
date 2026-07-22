@@ -1,0 +1,12 @@
+# 运行时状态（mapper/watchdog 写）
+status.json
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# 日志
+*.log

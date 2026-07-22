@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joy-Con (R) Vibe Coding 按键映射</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        @media (max-width: 700px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+        .section {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #0f3460;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #e94560;
+            margin-bottom: 16px;
+        }
+        .key-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .key-row:last-child { border-bottom: none; }
+        .key-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 52px;
+            height: 32px;
+            padding: 0 10px;
+            background: #0f3460;
+            border: 1px solid #e94560;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .key-badge.modifier {
+            background: #e94560;
+            border-color: #e94560;
+        }
+        .key-badge.stick {
+            background: #533483;
+            border-color: #533483;
+        }
+        .key-info {
+            flex: 1;
+        }
+        .key-action {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+        }
+        .key-desc {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .key-combo {
+            font-size: 11px;
+            color: #e94560;
+            margin-top: 2px;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .tip-box {
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            border: 1px solid #533483;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-top: 30px;
+        }
+        .tip-box h3 {
+            font-size: 14px;
+            color: #533483;
+            margin-bottom: 10px;
+            color: #a78bfa;
+        }
+        .tip-box p {
+            font-size: 13px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+        .workflow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .workflow-step {
+            background: #0f3460;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #fff;
+        }
+        .workflow-arrow {
+            color: #e94560;
+            font-size: 16px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Joy-Con (R) Vibe Coding 按键映射</h1>
+        <p class="subtitle">适配 Claude Code / Codex · 通过 Python HID 脚本驱动 · 蓝牙连接</p>
+
+        <div class="layout">
+            <!-- 主要操作键 -->
+            <div class="section">
+                <div class="section-title">主要操作键</div>
+                <div class="key-row">
+                    <span class="key-badge">A</span>
+                    <div class="key-info">
+                        <div class="key-action">Enter ↵</div>
+                        <div class="key-desc">确认选择 / 发送消息 / 执行命令</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge">B</span>
+                    <div class="key-info">
+                        <div class="key-action">⌘Z 撤销</div>
+                        <div class="key-desc">AI 改错了？一键撤回上一步操作</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge">X</span>
+                    <div class="key-info">
+                        <div class="key-action">⌫ 删除</div>
+                        <div class="key-desc">删除输入框中的字符</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge">Y</span>
+                    <div class="key-info">
+                        <div class="key-action">Esc 取消</div>
+                        <div class="key-desc">取消正在生成的回复 / 退出输入模式</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge">+</span>
+                    <div class="key-info">
+                        <div class="key-action">Tab 接受补全</div>
+                        <div class="key-desc">接受 AI 的代码建议（灰色预览文字）</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 修饰键 & 组合键 -->
+            <div class="section">
+                <div class="section-title">修饰键（按住不放）</div>
+                <div class="key-row">
+                    <span class="key-badge modifier">R</span>
+                    <div class="key-info">
+                        <div class="key-action">右 Command ⌘</div>
+                        <div class="key-desc">触发 Typeless 语音输入 / 组合键修饰</div>
+                        <div class="key-combo">按住 R + 其他键 = ⌘ + 该键</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge modifier">ZR</span>
+                    <div class="key-info">
+                        <div class="key-action">右 ⌘ + 右 ⌥</div>
+                        <div class="key-desc">双修饰键，用于特殊快捷键</div>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 20px;">组合键（配合 R 使用）</div>
+                <div class="key-row">
+                    <span class="key-badge">SL</span>
+                    <div class="key-info">
+                        <div class="key-action">R + SL = ⌘C 复制</div>
+                        <div class="key-desc">复制选中的代码或文字</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge">SR</span>
+                    <div class="key-info">
+                        <div class="key-action">SR 按住 = 右 Option ⌥</div>
+                        <div class="key-desc">唤醒 SaySo 语音输入（按住说话，松开结束）</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge">-</span>
+                    <div class="key-info">
+                        <div class="key-action">R + (-) = ⌘A 全选</div>
+                        <div class="key-desc">全选当前内容</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge">⌂</span>
+                    <div class="key-info">
+                        <div class="key-action">R + HOME = ⌘S 保存</div>
+                        <div class="key-desc">保存当前文件</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 摇杆 -->
+            <div class="section full-width">
+                <div class="section-title">摇杆（选项导航）</div>
+                <div class="key-row">
+                    <span class="key-badge stick">← 推左</span>
+                    <div class="key-info">
+                        <div class="key-action">↑ 上方向键</div>
+                        <div class="key-desc">在 Claude Code 选项列表中向上移动 / 浏览历史命令</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge stick">→ 推右</span>
+                    <div class="key-info">
+                        <div class="key-action">↓ 下方向键</div>
+                        <div class="key-desc">在 Claude Code 选项列表中向下移动 / 浏览历史命令</div>
+                    </div>
+                </div>
+                <div class="key-row">
+                    <span class="key-badge stick">按下</span>
+                    <div class="key-info">
+                        <div class="key-action">字母 D</div>
+                        <div class="key-desc">配合 R = ⌘D（分屏/书签，视应用而定）</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 典型工作流 -->
+        <div class="tip-box">
+            <h3>典型 Vibe Coding 工作流</h3>
+            <p>用 Joy-Con 就能完成完整的 AI 编程循环，不用碰键盘：</p>
+            <div class="workflow">
+                <span class="workflow-step">R 按住说话（Typeless 语音输入 prompt）</span>
+                <span class="workflow-arrow">→</span>
+                <span class="workflow-step">A 发送</span>
+                <span class="workflow-arrow">→</span>
+                <span class="workflow-step">摇杆选选项</span>
+                <span class="workflow-arrow">→</span>
+                <span class="workflow-step">A 确认</span>
+                <span class="workflow-arrow">→</span>
+                <span class="workflow-step">+ 接受补全</span>
+                <span class="workflow-arrow">→</span>
+                <span class="workflow-step">B 撤销（如果改错了）</span>
+            </div>
+        </div>
+
+        <div class="tip-box" style="margin-top: 16px; border-color: #e94560;">
+            <h3 style="color: #e94560;">注意事项</h3>
+            <p>
+                • 摇杆 Y 轴硬件无输出（副厂 Joy-Con），因此用 X 轴左右替代上下<br>
+                • 蓝牙断开后脚本会自动等待重连，无需手动重启<br>
+                • 脚本路径：~/Documents/workspace-ai/code/joycon-vibe-keyboard/joycon_mapper.py<br>
+                • 修改映射：运行 python3 config_server.py，浏览器打开 http://localhost:8766 可视化编辑
+            </p>
+        </div>
+
+        <p class="footer">Joy-Con (R) Vibe Coding Keyboard · Python HID + pynput · 2026</p>
+    </div>
+</body>
+</html>
