@@ -204,6 +204,39 @@ section{position:relative;z-index:1}
 .arch-box p{font-size:11px;color:var(--txt3)}
 .arch-arrow{color:var(--txt3);font-size:24px;flex-shrink:0}
 
+/* ── AI Prompt ── */
+.ai-setup{padding:100px 0;background:rgba(8,8,24,.5)}
+.prompt-box{
+  max-width:700px;margin:0 auto;position:relative;
+  background:rgba(5,5,16,.9);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,240,255,.05);
+}
+.prompt-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;
+  background:rgba(0,240,255,.04);border-bottom:1px solid var(--border);
+}
+.prompt-header span{font-size:11px;font-weight:700;color:var(--neon);letter-spacing:1.5px;text-transform:uppercase}
+.copy-btn{
+  padding:6px 16px;border-radius:8px;
+  background:var(--neon-dim);border:1px solid rgba(0,240,255,.25);
+  color:var(--neon);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.copy-btn:hover{background:rgba(0,240,255,.2);box-shadow:0 0 15px var(--neon-dim)}
+.copy-btn.copied{background:rgba(0,255,136,.15);border-color:rgba(0,255,136,.3);color:var(--ok)}
+.prompt-body{
+  padding:24px 28px;
+  font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;
+  line-height:1.8;color:var(--txt);white-space:pre-wrap;
+  max-height:300px;overflow-y:auto;
+}
+.prompt-hint{
+  max-width:700px;margin:16px auto 0;
+  text-align:center;font-size:12px;color:var(--txt3);line-height:1.6;
+}
+
 /* ── CTA ── */
 .cta{
   padding:100px 0;text-align:center;
@@ -390,6 +423,33 @@ footer a:hover{text-decoration:underline}
   </div>
 </section>
 
+<!-- ═══ AI One-Click Setup ═══ -->
+<section class="ai-setup">
+  <div class="container">
+    <div class="section-label">Vibe Coding</div>
+    <h2 class="section-title">Let AI set it up for you</h2>
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <span>Prompt for AI Assistant</span>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+      </div>
+      <div class="prompt-body" id="aiPrompt">Clone the Joy-Con Vibe Keyboard project from https://github.com/MagnetQ/joycon-vibe-keyboard and set it up on my Mac.
+
+Steps:
+1. Clone the repo to my workspace
+2. Install hidapi via Homebrew: brew install hidapi
+3. Install Python packages: pip3 install hidapi pynput
+   - Important: use hidapi (Cython), NOT hid (ctypes). If both are installed, run pip3 uninstall hid -y first.
+4. Pair my Joy-Con (R) via Bluetooth if not already paired
+5. Start the mapper: python3 joycon_mapper.py
+6. (Optional) Start the web config UI: python3 config_server.py, then open http://localhost:8766
+
+After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe coding. The default mappings are: A=Enter, B=Cmd+Z undo, X=Backspace, Y=Escape, PLUS=Tab, stick left/right=arrow keys. R and ZR are hold-modifier buttons.</div>
+    </div>
+    <p class="prompt-hint">Copy this prompt and paste it into <a href="https://qoder.com/qoderwork" style="color:var(--neon)">QoderWork</a>, Claude, Cursor, or any AI coding assistant.<br>The AI will handle the entire installation process for you.</p>
+  </div>
+</section>
+
 <!-- ═══ CTA ═══ -->
 <section class="cta">
   <div class="container">
@@ -417,5 +477,15 @@ footer a:hover{text-decoration:underline}
   </div>
 </footer>
 
+<script>
+function copyPrompt(btn){
+  const text=document.getElementById('aiPrompt').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copied!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+</script>
 </body>
 </html>
