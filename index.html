@@ -290,6 +290,33 @@ footer a:hover{text-decoration:underline}
   </div>
 </section>
 
+<!-- ═══ AI One-Click Setup ═══ -->
+<section class="ai-setup">
+  <div class="container">
+    <div class="section-label">Vibe Coding</div>
+    <h2 class="section-title">Let AI set it up for you</h2>
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <span>Prompt for AI Assistant</span>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+      </div>
+      <div class="prompt-body" id="aiPrompt">Clone the Joy-Con Vibe Keyboard project from https://github.com/MagnetQ/joycon-vibe-keyboard and set it up on my Mac.
+
+Steps:
+1. Clone the repo to my workspace
+2. Install hidapi via Homebrew: brew install hidapi
+3. Install Python packages: pip3 install hidapi pynput
+   - Important: use hidapi (Cython), NOT hid (ctypes). If both are installed, run pip3 uninstall hid -y first.
+4. Pair my Joy-Con (R) via Bluetooth if not already paired
+5. Start the mapper: python3 joycon_mapper.py
+6. (Optional) Start the web config UI: python3 config_server.py, then open http://localhost:8766
+
+After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe coding. The default mappings are: A=Enter, B=Cmd+Z undo, X=Backspace, Y=Escape, PLUS=Tab, stick left/right=arrow keys. R and ZR are hold-modifier buttons.</div>
+    </div>
+    <p class="prompt-hint">Copy this prompt and paste it into <a href="https://qoder.com/qoderwork" style="color:var(--neon)">QoderWork</a>, Claude, Cursor, or any AI coding assistant.<br>The AI will handle the entire installation process for you.</p>
+  </div>
+</section>
+
 <!-- ═══ Stats ═══ -->
 <section class="stats">
   <div class="container">
@@ -420,33 +447,6 @@ footer a:hover{text-decoration:underline}
 <span class="comment"># Run!</span>
 <span class="cmd">python3</span> joycon_mapper.py
     </div>
-  </div>
-</section>
-
-<!-- ═══ AI One-Click Setup ═══ -->
-<section class="ai-setup">
-  <div class="container">
-    <div class="section-label">Vibe Coding</div>
-    <h2 class="section-title">Let AI set it up for you</h2>
-    <div class="prompt-box">
-      <div class="prompt-header">
-        <span>Prompt for AI Assistant</span>
-        <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
-      </div>
-      <div class="prompt-body" id="aiPrompt">Clone the Joy-Con Vibe Keyboard project from https://github.com/MagnetQ/joycon-vibe-keyboard and set it up on my Mac.
-
-Steps:
-1. Clone the repo to my workspace
-2. Install hidapi via Homebrew: brew install hidapi
-3. Install Python packages: pip3 install hidapi pynput
-   - Important: use hidapi (Cython), NOT hid (ctypes). If both are installed, run pip3 uninstall hid -y first.
-4. Pair my Joy-Con (R) via Bluetooth if not already paired
-5. Start the mapper: python3 joycon_mapper.py
-6. (Optional) Start the web config UI: python3 config_server.py, then open http://localhost:8766
-
-After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe coding. The default mappings are: A=Enter, B=Cmd+Z undo, X=Backspace, Y=Escape, PLUS=Tab, stick left/right=arrow keys. R and ZR are hold-modifier buttons.</div>
-    </div>
-    <p class="prompt-hint">Copy this prompt and paste it into <a href="https://qoder.com/qoderwork" style="color:var(--neon)">QoderWork</a>, Claude, Cursor, or any AI coding assistant.<br>The AI will handle the entire installation process for you.</p>
   </div>
 </section>
 
