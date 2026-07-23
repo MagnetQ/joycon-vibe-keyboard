@@ -1,12 +1,28 @@
-# 运行时状态（mapper/watchdog 写）
+# Runtime state (written by mapper/watchdog)
 status.json
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
 
 # macOS
 .DS_Store
 
-# 日志
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
 *.log

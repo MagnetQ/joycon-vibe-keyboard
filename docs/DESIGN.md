@@ -76,11 +76,15 @@
 | `GET /` | `/` | 返回 joycon_config.html 页面 |
 | `GET /api/config` | `/api/config` | 返回当前 config.json 内容（JSON） |
 | `POST /api/config` | `/api/config` | 接收 JSON body，写入 config.json |
+| `GET /api/autostart` | `/api/autostart` | 返回开机自启状态 `{"enabled": bool}` |
+| `GET /api/status` | `/api/status` | 返回手柄连接状态（读 status.json，fallback 用 hid.enumerate 直连检测） |
+| `POST /api/autostart/enable` | `/api/autostart/enable` | 创建 LaunchAgent plist + launchctl load |
+| `POST /api/autostart/disable` | `/api/autostart/disable` | launchctl unload + 删除 plist |
 
 **启动命令**：
 
 ```bash
-cd ~/Documents/workspace-ai/code/joycon-vibe-keyboard
+cd joycon-vibe-keyboard
 python3 config_server.py
 # 浏览器打开 http://localhost:8766
 ```

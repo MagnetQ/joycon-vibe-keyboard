@@ -518,8 +518,6 @@ function renderCards(){
   c.innerHTML=h;
 }
 
-function updateSvgLabels(){}
-
 // ── Cross-highlight ──
 function hlSvg(id){
   document.querySelectorAll(".btn-grp").forEach(g=>g.classList.remove("active"));
@@ -595,7 +593,7 @@ function saveFromModal(){
   if(id==="R"||id==="ZR"){
     const v=document.getElementById("holdSel").value;
     if(!config.modifiers)config.modifiers={};
-    config.modifiers[id]=v.split("+");
+    config.modifiers[id]=v?v.split("+"):[];
   } else if(id==="stick_left"||id==="stick_right"){
     const dir=id==="stick_left"?"left":"right";
     const v=document.getElementById("stickSel").value;
@@ -667,7 +665,7 @@ async function init(){
     document.getElementById("serverBadge").className="badge off";
     document.getElementById("serverBadge").innerHTML='<div class="badge-dot"></div>服务器未连接';
   }
-  renderCards();updateSvgLabels();checkAutostart();pollStatus();
+  renderCards();checkAutostart();pollStatus();
 }
 init();
 </script>

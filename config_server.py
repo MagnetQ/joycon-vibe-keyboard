@@ -14,7 +14,6 @@ import os
 import time
 import subprocess
 import shutil
-import hid
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 PORT = 8766
@@ -93,7 +92,8 @@ class ConfigHandler(SimpleHTTPRequestHandler):
             # If mapper isn't running, check HID directly
             if state in ("offline", "stale"):
                 try:
-                    devices = hid.enumerate(0x057e, 0x2006)
+                    import hid as _hid
+                    devices = _hid.enumerate(0x057e, 0x2006)
                     if devices:
                         state = "connected"
                         ts = time.time()
@@ -121,10 +121,10 @@ class ConfigHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(b'{"status": "ok"}')
                 print("[OK] Config saved.")
             except Exception as e:
-                self.send_response(500)
+                self.send_response(400)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(f'{{"error": "{str(e)}"}}'.encode())
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
 
         elif self.path == "/api/autostart/enable":
             try:

@@ -25,12 +25,13 @@ import os
 import sys
 import signal
 import json
+import shutil
 
 VENDOR_ID = 0x057e
 PRODUCT_ID = 0x2006
 CHECK_INTERVAL = 30      # seconds between checks when connected
 RECONNECT_INTERVAL = 10  # seconds between reconnect attempts when disconnected
-BLUEUTIL_PATH = "/opt/homebrew/bin/blueutil"
+BLUEUTIL_PATH = shutil.which("blueutil") or "/opt/homebrew/bin/blueutil"
 
 LOG_FILE = "/tmp/joycon_watchdog.log"
 STATUS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "status.json")
