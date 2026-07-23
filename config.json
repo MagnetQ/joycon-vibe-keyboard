@@ -39,8 +39,10 @@
       "key": "a"
     },
     "HOME": {
-      "modifiers": [],
-      "key": "s"
+      "modifiers": [
+        "cmd"
+      ],
+      "key": "tab"
     },
     "STICK_CLICK": {
       "modifiers": [],

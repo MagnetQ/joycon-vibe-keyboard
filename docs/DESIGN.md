@@ -52,7 +52,7 @@
 
 **三个配置区**：
 
-- `modifiers` — 修饰键（按住生效）。key 是手柄按钮名（R / ZR），value 是键盘修饰键名数组。按住 R 时，所有普通按键自动叠加该修饰键。
+- `modifiers` — 修饰键（按住生效）。key 是手柄按钮名（R / ZR / SR），value 是键盘修饰键名数组。按住 R 时，所有普通按键自动叠加该修饰键。
 - `buttons` — 动作按键（按下即触发）。每个按键包含两个字段：`modifiers`（可选的组合键前缀，空数组表示无）和 `key`（主键）。mapper 根据 modifiers 是否为空自动区分"普通按键"和"组合键"。
 - `stick` — 摇杆方向映射。key 是物理方向（left / right），value 是键盘方向键。
 
@@ -214,7 +214,7 @@ def resolve_key(name):
 | Y | Escape | 取消 / 退出 |
 | PLUS | Tab | 接受 AI 补全建议 |
 | MINUS | a | 配合 R 键 = ⌘+A 全选 |
-| HOME | s | 配合 R 键 = ⌘+S 保存 |
+| HOME | 保持 ⌘，每次点按触发一次 Tab | 按自己的频率逐个选择；停止点按 0.8 秒后确认 |
 | STICK_CLICK | d | 配合 R 键 = ⌘+D |
 | SL | c | 配合 R 键 = ⌘+C 复制 |
 | SR（按住） | 右 Option（alt_r） | 按住唤醒 SaySo 语音输入 |

@@ -48,6 +48,7 @@ except ImportError:
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 STATUS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "status.json")
 RIGHT_OPTION_KEYCODE = 61
+APP_SWITCH_CONFIRM_SECONDS = 0.8
 
 
 def write_status(state, extra=None):
@@ -78,6 +79,62 @@ def set_modifier_state(keyboard, button_name, keys, is_pressed):
             keyboard.press(key)
         else:
             keyboard.release(key)
+
+
+class TapCycleShortcut:
+    """Keep modifiers held while physical taps advance a shortcut one step."""
+
+    def __init__(self, keyboard, modifiers, key, confirm_seconds):
+        self.keyboard = keyboard
+        self.modifiers = modifiers
+        self.key = key
+        self.confirm_seconds = confirm_seconds
+        self.active = False
+        self.confirm_at = None
+
+    def _tap_key(self):
+        self.keyboard.press(self.key)
+        self.keyboard.release(self.key)
+
+    def press(self, now):
+        if not self.active:
+            for modifier in self.modifiers:
+                self.keyboard.press(modifier)
+            self.active = True
+        self.confirm_at = None
+        self._tap_key()
+        return True
+
+    def release(self, now):
+        if not self.active:
+            return False
+        self.confirm_at = now + self.confirm_seconds
+        return True
+
+    def tick(self, now):
+        if not self.active or self.confirm_at is None or now < self.confirm_at:
+            return False
+        self.force_release()
+        return True
+
+    def force_release(self):
+        if not self.active:
+            return False
+        for modifier in reversed(self.modifiers):
+            self.keyboard.release(modifier)
+        self.active = False
+        self.confirm_at = None
+        return True
+
+
+def is_home_app_switcher_combo(combo):
+    """Return True when HOME is configured as a single Command + Tab combo."""
+    if combo is None:
+        return False
+    modifiers, key = combo
+    command_keys = (Key.cmd, Key.cmd_l, Key.cmd_r)
+    return len(modifiers) == 1 and modifiers[0] in command_keys and key == Key.tab
+
 
 # Map config string names → pynput Key objects
 SPECIAL_KEYS = {
@@ -232,6 +289,16 @@ def main():
         sys.exit(1)
 
     keyboard = Controller()
+    home_app_switcher = None
+    home_combo = COMBOS.get("HOME")
+    if is_home_app_switcher_combo(home_combo):
+        home_modifiers, home_key = home_combo
+        home_app_switcher = TapCycleShortcut(
+            keyboard,
+            home_modifiers,
+            home_key,
+            APP_SWITCH_CONFIRM_SECONDS,
+        )
 
     print("Joy-Con (R) → Keyboard Mapper for Vibe Coding")
     print("=" * 50)
@@ -252,7 +319,13 @@ def main():
         print("Combo buttons (direct shortcuts):")
         for btn, (mods, key) in COMBOS.items():
             mod_str = "+".join(key_display_name(m) for m in mods)
-            print(f"  {btn:12s} → {mod_str}+{key_display_name(key)}")
+            if btn == "HOME" and home_app_switcher:
+                print(
+                    f"  {btn:12s} → tap {key_display_name(key)} to cycle, "
+                    f"select after {APP_SWITCH_CONFIRM_SECONDS:.1f}s idle"
+                )
+            else:
+                print(f"  {btn:12s} → {mod_str}+{key_display_name(key)}")
         print()
     if STICK:
         print("Stick mappings:")
@@ -289,6 +362,9 @@ def main():
             try:
                 while True:
                     data = device.read(64)
+                    if home_app_switcher and home_app_switcher.tick(time.monotonic()):
+                        print("  [HOME] ✓ select app")
+
                     if not data:
                         no_data_count += 1
                         if no_data_count > 1250:  # ~5s no data = disconnected
@@ -320,6 +396,11 @@ def main():
                                 set_modifier_state(keyboard, name, MODIFIERS[name], True)
                                 names = "+".join(key_display_name(k) for k in MODIFIERS[name])
                                 print(f"  [{name}] ↓ hold {names}")
+                            elif name == "HOME" and home_app_switcher:
+                                was_switching = home_app_switcher.active
+                                home_app_switcher.press(time.monotonic())
+                                action = "next app" if was_switching else "open app switcher"
+                                print(f"  [HOME] → {action}")
                             elif name in COMBOS:
                                 mods, key = COMBOS[name]
                                 for m in mods:
@@ -340,6 +421,12 @@ def main():
                                 set_modifier_state(keyboard, name, MODIFIERS[name], False)
                                 names = "+".join(key_display_name(k) for k in MODIFIERS[name])
                                 print(f"  [{name}] ↑ release {names}")
+                            elif name == "HOME" and home_app_switcher:
+                                home_app_switcher.release(time.monotonic())
+                                print(
+                                    f"  [HOME] … select after "
+                                    f"{APP_SWITCH_CONFIRM_SECONDS:.1f}s idle"
+                                )
 
                         prev_buttons[name] = is_pressed
 
@@ -376,6 +463,8 @@ def main():
                 print("\n[!] Joy-Con connection lost.")
                 write_status("disconnected")
             finally:
+                if home_app_switcher:
+                    home_app_switcher.force_release()
                 release_all_keys(keyboard, MODIFIERS, STICK, stick_state)
                 try:
                     device.close()

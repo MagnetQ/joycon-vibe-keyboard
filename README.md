@@ -13,6 +13,7 @@ This project was born out of frustration with existing mapping tools - Enjoyable
 - **Hold-modifier buttons** - R and ZR act as modifier keys (Right Command, Right Option) that you hold down while pressing other buttons
 - **Hold-to-talk voice** - SR holds Right Option to trigger SaySo voice input (native HID event, press to start, release to stop)
 - **Combo key support** - any button can fire a full key combination (e.g. B -> ⌘+Z for undo) without holding a modifier first
+- **Tap-to-cycle app switching** - each HOME tap advances the macOS app switcher exactly once; stop tapping for 0.8 seconds to select
 - **Analog stick mapping** - push the stick left/right to trigger arrow keys (handy for navigating AI code suggestions)
 - **Auto-reconnect** - if Bluetooth drops, the script waits and reconnects automatically
 - **Bluetooth watchdog** - optional `joycon_watchdog.py` daemon reconnects at the Bluetooth level via `blueutil` when HID is lost
@@ -112,7 +113,7 @@ Then open `http://localhost:8766` in your browser. The page shows an SVG diagram
 | Y | Escape | Cancel / exit |
 | PLUS | Tab | Accept AI code completion |
 | MINUS | a | With R held -> ⌘+A select all |
-| HOME | s | With R held -> ⌘+S save |
+| HOME | Keep ⌘ held + Tab per tap | Tap at your own pace; 0.8 seconds idle selects the app |
 | STICK CLICK | d | With R held -> ⌘+D |
 | SL | c | With R held -> ⌘+C copy |
 | Stick left | ↑ | Navigate up in AI suggestions |
@@ -134,6 +135,8 @@ joycon-vibe-keyboard/
 ├── tools/
 │   ├── test_buttons.py     # Debug utility for button press detection
 │   └── debug_stick.py      # Debug utility for analog stick values
+├── tests/
+│   └── test_home_app_switcher.py  # HOME manual-cycle behavior tests
 ├── assets/
 │   ├── project-overview.png
 │   └── vibe-coding-poster.png
