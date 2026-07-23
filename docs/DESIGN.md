@@ -1,36 +1,38 @@
-# Joy-Con Vibe Coding — 映射配置工具设计文档
+# Joy-Con Vibe Coding — Mapping Configuration Tool Design Document
 
-## 项目概述
+## Project Overview
 
-用 Joy-Con (R) 手柄作为 Vibe Coding 的快捷键盘，通过蓝牙 HID 读取手柄按键，映射为键盘快捷键。本工具提供一个浏览器可视化界面，让用户自由配置按键映射关系，支持单键、组合键和摇杆方向映射。
+Use a Joy-Con (R) controller as a shortcut keyboard for Vibe Coding. Read controller buttons via Bluetooth HID and map them to keyboard shortcuts. This tool provides a browser-based visual interface for users to freely configure button mappings, supporting single keys, combo keys, and stick direction mapping.
 
-## 系统架构
+## System Architecture
 
 ```
-┌─────────────────┐    读写     ┌──────────────┐
-│  浏览器配置页面   │ ────────── │  config.json  │
-│ joycon_config    │   HTTP API │              │
-│   .html          │            └──────┬───────┘
-└────────┬────────┘                    │ 启动时读取
-         │                             ▼
-         │ 托管页面           ┌──────────────────┐
-         ▼                   │  joycon_mapper.py │
-┌─────────────────┐          │  (蓝牙 HID 读取   │
-│ config_server.py │          │   + 键盘模拟)     │
-│ (本地 HTTP 服务)  │          └──────────────────┘
+┌─────────────────┐  read/write  ┌──────────────┐
+│  Browser Config  │ ─────────── │  config.json  │
+│  Page            │   HTTP API  │              │
+│ joycon_config    │             └──────┬───────┘
+│   .html          │                    │ read on startup
+└────────┬─────────┘                    ▼
+         │                              ┌──────────────────┐
+         │ hosts page                   │  joycon_mapper.py │
+         ▼                              │  (Bluetooth HID   │
+┌─────────────────┐                     │   read            │
+│ config_server.py │                     │   + keyboard      │
+│ (local HTTP      │                     │     emulation)   │
+│  server)         │                     └──────────────────┘
 └─────────────────┘
 ```
 
-**四个文件的职责**：
+**Four file responsibilities**:
 
-| 文件 | 角色 | 说明 |
-|------|------|------|
-| `config.json` | 配置源 | 唯一的数据源，JSON 格式，存放所有按键映射 |
-| `config_server.py` | 服务器 | Python HTTP 服务器（端口 8766），提供 API + 托管 HTML |
-| `joycon_config.html` | 前端 UI | 交互式配置页面，SVG 手柄示意图 + 下拉菜单 |
-| `joycon_mapper.py` | 运行时 | 启动时从 config.json 加载映射，通过蓝牙 HID 读取按键并模拟键盘 |
+| File | Role | Description |
+|------|------|-------------|
+| `config.json` | Config source | Single source of truth, JSON format, stores all button mappings |
+| `config_server.py` | Server | Python HTTP server (port 8766), provides API + hosts HTML |
+| `joycon_config.html` | Frontend UI | Interactive configuration page, SVG controller diagram + dropdown menus |
+| `joycon_mapper.py` | Runtime | Loads mappings from config.json on startup, reads buttons via Bluetooth HID and emulates keyboard |
 
-## config.json 格式规范
+## config.json Format Specification
 
 ```json
 {
@@ -50,86 +52,86 @@
 }
 ```
 
-**三个配置区**：
+**Three configuration sections**:
 
-- `modifiers` — 修饰键（按住生效）。key 是手柄按钮名（R / ZR / SR），value 是键盘修饰键名数组。按住 R 时，所有普通按键自动叠加该修饰键。
-- `buttons` — 动作按键（按下即触发）。每个按键包含两个字段：`modifiers`（可选的组合键前缀，空数组表示无）和 `key`（主键）。mapper 根据 modifiers 是否为空自动区分"普通按键"和"组合键"。
-- `stick` — 摇杆方向映射。key 是物理方向（left / right），value 是键盘方向键。
+- `modifiers` — Modifier keys (active while held). Key is the controller button name (R / ZR / SR), value is an array of keyboard modifier key names. While R is held, all normal key presses automatically have this modifier applied.
+- `buttons` — Action buttons (triggered on press). Each button contains two fields: `modifiers` (optional combo key prefix, empty array means none) and `key` (primary key). The mapper automatically distinguishes between "normal keys" and "combo keys" based on whether modifiers is empty.
+- `stick` — Stick direction mapping. Key is the physical direction (left / right), value is the keyboard arrow key.
 
-**按键名称规范**：
+**Key Name Convention**:
 
-- 特殊键：`enter`、`tab`、`esc`、`backspace`、`delete`、`space`、`up`、`down`、`left`、`right`
-- 修饰键：`cmd`、`cmd_l`、`cmd_r`、`alt`、`alt_l`、`alt_r`、`ctrl`、`ctrl_l`、`ctrl_r`、`shift`、`shift_l`、`shift_r`
-- 功能键：`f1` ~ `f12`
-- 字母/数字：直接用字符，如 `"a"`、`"z"`、`"1"`
+- Special keys: `enter`, `tab`, `esc`, `backspace`, `delete`, `space`, `up`, `down`, `left`, `right`
+- Modifier keys: `cmd`, `cmd_l`, `cmd_r`, `alt`, `alt_l`, `alt_r`, `ctrl`, `ctrl_l`, `ctrl_r`, `shift`, `shift_l`, `shift_r`
+- Function keys: `f1` ~ `f12`
+- Letters/digits: use the character directly, e.g. `"a"`, `"z"`, `"1"`
 
-## config_server.py 设计
+## config_server.py Design
 
-**技术选型**：Python 内置 `http.server`，零外部依赖。
+**Technology choice**: Python built-in `http.server`, zero external dependencies.
 
-**端口**：8766
+**Port**: 8766
 
-**API 接口**：
+**API endpoints**:
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET /` | `/` | 返回 joycon_config.html 页面 |
-| `GET /api/config` | `/api/config` | 返回当前 config.json 内容（JSON） |
-| `POST /api/config` | `/api/config` | 接收 JSON body，写入 config.json |
-| `GET /api/autostart` | `/api/autostart` | 返回开机自启状态 `{"enabled": bool}` |
-| `GET /api/status` | `/api/status` | 返回手柄连接状态（读 status.json，fallback 用 hid.enumerate 直连检测） |
-| `POST /api/autostart/enable` | `/api/autostart/enable` | 创建 LaunchAgent plist + launchctl load |
-| `POST /api/autostart/disable` | `/api/autostart/disable` | launchctl unload + 删除 plist |
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET /` | `/` | Return the joycon_config.html page |
+| `GET /api/config` | `/api/config` | Return current config.json contents (JSON) |
+| `POST /api/config` | `/api/config` | Receive JSON body, write to config.json |
+| `GET /api/autostart` | `/api/autostart` | Return auto-start status `{"enabled": bool}` |
+| `GET /api/status` | `/api/status` | Return controller connection status (reads status.json, fallback uses hid.enumerate for direct detection) |
+| `POST /api/autostart/enable` | `/api/autostart/enable` | Create LaunchAgent plist + launchctl load |
+| `POST /api/autostart/disable` | `/api/autostart/disable` | launchctl unload + delete plist |
 
-**启动命令**：
+**Startup command**:
 
 ```bash
 cd joycon-vibe-keyboard
 python3 config_server.py
-# 浏览器打开 http://localhost:8766
+# Open browser to http://localhost:8766
 ```
 
-## joycon_config.html 页面设计
+## joycon_config.html Page Design
 
-### 整体布局
+### Overall Layout
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  Joy-Con (R) 按键映射配置                          [保存]  │
+│  Joy-Con (R) Button Mapping Configuration        [Save]  │
 ├───────────────────────┬──────────────────────────────────┤
 │                       │                                  │
-│    ┌─────────┐        │  ── 修饰键（按住生效）──          │
-│    │         │        │  R  按住触发: [右 Command ▾]      │
-│    │  SVG    │        │  ZR 按住触发: [右 Cmd + 右 Opt ▾] │
+│    ┌─────────┐        │  ── Modifier Keys (hold) ──      │
+│    │         │        │  R  hold triggers: [Right Cmd ▾]  │
+│    │  SVG    │        │  ZR hold triggers: [R Cmd+R Opt ▾]│
 │    │  Joy-Con│        │                                  │
-│    │  (R)    │        │  ── 动作按键（按下触发）──         │
-│    │  示意图  │        │  A  [无 ▾]  +  [Enter ▾]         │
-│    │         │        │  B  [⌘ ▾]   +  [z ▾]            │
-│    │  标注了  │        │  X  [无 ▾]  +  [Backspace ▾]     │
-│    │  每个按钮 │        │  Y  [无 ▾]  +  [Escape ▾]       │
-│    │  的位置  │        │  ...                             │
-│    │         │        │                                  │
-│    └─────────┘        │  ── 摇杆方向 ──                   │
-│                       │  推左: [↑ ▾]   推右: [↓ ▾]       │
-│                       │                                  │
+│    │  (R)    │        │  ── Action Buttons (press) ──     │
+│    │  diagram│        │  A  [None ▾]  +  [Enter ▾]       │
+│    │         │        │  B  [⌘ ▾]    +  [z ▾]            │
+│    │  labels │        │  X  [None ▾]  +  [Backspace ▾]   │
+│    │  show   │        │  Y  [None ▾]  +  [Escape ▾]      │
+│    │  each   │        │  ...                             │
+│    │  button │        │                                  │
+│    │  position│       │  ── Stick Direction ──            │
+│    │         │        │  Push Left: [↑ ▾] Push Right: [↓ ▾]│
+│    └─────────┘        │                                  │
 └───────────────────────┴──────────────────────────────────┘
 ```
 
-### 视觉风格
+### Visual Style
 
-- 深色主题（`#1a1a2e` 背景，`#e0e0e0` 文字），与 keymap.html 一致
-- 左侧 SVG 示意图：Joy-Con (R) 的轮廓，按钮位置标注名称，悬停时高亮
-- 右侧配置区：按"修饰键"、"动作按键"、"摇杆"三个分组
-- 每个动作按键一行，两个下拉菜单并排：修饰键下拉 + 主键下拉
-- 保存按钮右上角，点击后底部弹 toast 提示"保存成功"或"保存失败"
+- Dark theme (`#1a1a2e` background, `#e0e0e0` text), consistent with keymap.html
+- Left side SVG diagram: Joy-Con (R) outline with button positions labeled, highlights on hover
+- Right side configuration area: grouped into "Modifier Keys", "Action Buttons", "Stick" sections
+- Each action button gets one row with two dropdowns side by side: modifier dropdown + primary key dropdown
+- Save button in the top-right corner, clicking shows a toast at the bottom: "Saved successfully" or "Save failed"
 
-### 下拉菜单选项
+### Dropdown Options
 
-**修饰键下拉**（动作按键左侧）：
+**Modifier dropdown** (left side of action buttons):
 
-| 显示 | 值 |
-|------|------|
-| 无 | `[]` |
+| Display | Value |
+|---------|-------|
+| None | `[]` |
 | ⌘ | `["cmd"]` |
 | ⌘+⇧ | `["cmd", "shift"]` |
 | ⌘+⌥ | `["cmd", "alt"]` |
@@ -138,38 +140,38 @@ python3 config_server.py
 | ⌃ | `["ctrl"]` |
 | ⌘+⌃ | `["cmd", "ctrl"]` |
 
-**主键下拉**（动作按键右侧）：
+**Primary key dropdown** (right side of action buttons):
 
-Enter、Tab、Escape、Backspace、Delete、Space、↑ ↓ ← →、A–Z、0–9、F1–F12
+Enter, Tab, Escape, Backspace, Delete, Space, ↑ ↓ ← →, A–Z, 0–9, F1–F12
 
-**修饰键按住触发下拉**（R / ZR 专用）：
+**Modifier hold trigger dropdown** (R / ZR specific):
 
-右 Command、右 Command + 右 Option、右 Option、右 Shift、无
+Right Command, Right Command + Right Option, Right Option, Right Shift, None
 
-**摇杆方向下拉**：
+**Stick direction dropdown**:
 
-↑、↓、←、→、无
+↑, ↓, ←, →, None
 
-### 交互行为
+### Interaction Behavior
 
-- 页面加载时，`GET /api/config` 获取当前配置并填充所有下拉菜单
-- 用户修改任意下拉后，点击"保存"按钮，`POST /api/config` 提交整个配置
-- 保存成功：底部绿色 toast "保存成功，重启 mapper 后生效"
-- 保存失败：底部红色 toast "保存失败: {错误信息}"
-- 不做实时保存，避免用户改到一半就写入不完整配置
+- On page load, `GET /api/config` fetches current configuration and populates all dropdowns
+- After the user modifies any dropdown, clicking the "Save" button sends `POST /api/config` with the entire configuration
+- Save success: green toast at bottom "Saved successfully, restart mapper to apply"
+- Save failure: red toast at bottom "Save failed: {error message}"
+- No auto-save on change, to avoid writing incomplete configurations while the user is mid-edit
 
-## joycon_mapper.py 改造
+## joycon_mapper.py Refactoring
 
-**改造要点**：删除所有硬编码的 MODIFIERS / BUTTONS / COMBOS 字典，改为启动时从 config.json 加载。
+**Refactoring goal**: Remove all hardcoded MODIFIERS / BUTTONS / COMBOS dictionaries, replace with loading from config.json on startup.
 
-**新增 `load_config()` 函数**：
+**New `load_config()` function**:
 
-1. 读取 config.json
-2. 将字符串键名转换为 pynput 的 `Key` 或 `KeyCode` 对象
-3. 根据 `buttons` 中每个按键的 `modifiers` 是否为空，自动拆分为"普通按键"和"组合键"
-4. 返回 `(modifiers, buttons, combos, stick)` 四个字典
+1. Read config.json
+2. Convert string key names to pynput `Key` or `KeyCode` objects
+3. For each button in `buttons`, check if `modifiers` is empty to automatically split into "normal keys" and "combo keys"
+4. Return `(modifiers, buttons, combos, stick)` — four dictionaries
 
-**键名转换规则**：
+**Key name resolution rules**:
 
 ```python
 SPECIAL_KEYS = {
@@ -183,51 +185,51 @@ def resolve_key(name):
     return getattr(Key, name)
 ```
 
-**启动日志**：打印当前加载的所有映射关系，方便用户确认配置已生效。
+**Startup logging**: Print all currently loaded mappings so the user can confirm the configuration is active.
 
-**其他不变**：蓝牙 HID 读取逻辑、自动重连、摇杆处理等保持原样。
+**Everything else unchanged**: Bluetooth HID reading logic, auto-reconnect, stick handling remain as-is.
 
-## 使用流程
+## Usage Workflow
 
 ```
-第一次使用：
-  1. 终端: python3 config_server.py
-  2. 浏览器: http://localhost:8766
-  3. 在页面上配置按键映射，点保存
-  4. 终端: python3 joycon_mapper.py
-  5. 开始用 Joy-Con 操作
+First time use:
+  1. Terminal: python3 config_server.py
+  2. Browser: http://localhost:8766
+  3. Configure button mappings on the page, click Save
+  4. Terminal: python3 joycon_mapper.py
+  5. Start using the Joy-Con
 
-修改配置：
-  1. 停止 joycon_mapper.py（Ctrl+C）
-  2. 浏览器打开配置页面，改映射，保存
-  3. 重启 joycon_mapper.py
+Modifying configuration:
+  1. Stop joycon_mapper.py (Ctrl+C)
+  2. Open the configuration page in browser, change mappings, save
+  3. Restart joycon_mapper.py
 
-日常启动：
-  1. python3 joycon_mapper.py（直接读取上次的 config.json）
+Daily startup:
+  1. python3 joycon_mapper.py (reads the previous config.json directly)
 ```
 
-## 当前默认映射
+## Current Default Mapping
 
-| 手柄按键 | 键盘映射 | Vibe Coding 用途 |
-|---------|---------|-----------------|
-| R（按住） | 右 Command | 触发 Typeless 语音输入 |
-| ZR（按住） | 右 Cmd + 右 Opt | 备用组合修饰键 |
-| A | Enter | 确认 / 发送 |
-| B | ⌘+Z | 撤销 |
-| X | Backspace | 删除 |
-| Y | Escape | 取消 / 退出 |
-| PLUS | Tab | 接受 AI 补全建议 |
-| MINUS | a | 配合 R 键 = ⌘+A 全选 |
-| HOME | 保持 ⌘，每次点按触发一次 Tab | 按自己的频率逐个选择；停止点按 0.8 秒后确认 |
-| STICK_CLICK | d | 配合 R 键 = ⌘+D |
-| SL | c | 配合 R 键 = ⌘+C 复制 |
-| SR（按住） | 右 Option（alt_r） | 按住唤醒 SaySo 语音输入 |
-| 摇杆左 | ↑ | 向上移动（选代码建议） |
-| 摇杆右 | ↓ | 向下移动（选代码建议） |
+| Controller Button | Keyboard Mapping | Vibe Coding Purpose |
+|-------------------|------------------|---------------------|
+| R (hold) | Right Command | Trigger Typeless voice input |
+| ZR (hold) | Right Cmd + Right Opt | Backup combo modifier |
+| A | Enter | Confirm / Send |
+| B | ⌘+Z | Undo |
+| X | Backspace | Delete |
+| Y | Escape | Cancel / Exit |
+| PLUS | Tab | Accept AI autocomplete suggestion |
+| MINUS | a | Combined with R key = ⌘+A Select All |
+| HOME | Hold ⌘, each press triggers one Tab | Select one by one at your own pace; stops and confirms 0.8s after last press |
+| STICK_CLICK | d | Combined with R key = ⌘+D |
+| SL | c | Combined with R key = ⌘+C Copy |
+| SR (hold) | Right Option (alt_r) | Hold to wake SaySo voice input |
+| Stick Left | ↑ | Move up (select code suggestions) |
+| Stick Right | ↓ | Move down (select code suggestions) |
 
-## 已知限制
+## Known Limitations
 
-- Joy-Con Y 轴物理损坏（第三方手柄），摇杆仅 X 轴可用，左右映射为上下方向
-- macOS 下同一时间只能有一个进程打开 HID 设备，mapper 运行时其他调试脚本无法连接
-- 修改配置后需要重启 mapper 才能生效（不做热加载）
-- 蓝牙连接约 5 秒无数据视为断开，自动重连
+- Joy-Con Y-axis is physically broken (third-party controller), stick only works on X-axis; left/right mapped to up/down directions
+- On macOS, only one process can open an HID device at a time; while the mapper is running, other debug scripts cannot connect
+- Configuration changes require restarting the mapper to take effect (no hot-reload)
+- Bluetooth connection is considered disconnected after ~5 seconds of no data, auto-reconnect is triggered

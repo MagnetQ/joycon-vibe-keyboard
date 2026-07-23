@@ -135,7 +135,7 @@ class ConfigHandler(SimpleHTTPRequestHandler):
                     ["launchctl", "load", "-w", PLIST_PATH],
                     capture_output=True, check=True,
                 )
-                self._json_ok("开机自启已启用，mapper 正在后台运行")
+                self._json_ok("Auto-start enabled, mapper is running in the background")
                 print("[OK] Auto-start enabled.")
             except Exception as e:
                 self._json_err(str(e))
@@ -148,7 +148,7 @@ class ConfigHandler(SimpleHTTPRequestHandler):
                 )
                 if os.path.exists(PLIST_PATH):
                     os.remove(PLIST_PATH)
-                self._json_ok("开机自启已关闭，mapper 后台进程已停止")
+                self._json_ok("Auto-start disabled, mapper background process stopped")
                 print("[OK] Auto-start disabled.")
             except Exception as e:
                 self._json_err(str(e))

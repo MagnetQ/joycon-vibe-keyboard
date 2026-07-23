@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -272,10 +272,10 @@ body::after{
     </div>
   </div>
   <div class="topbar-right">
-    <div class="badge ok" id="serverBadge"><div class="badge-dot"></div>服务器运行中</div>
-    <div class="badge off" id="connBadge"><div class="badge-dot"></div><span id="connText">手柄离线</span></div>
+    <div class="badge ok" id="serverBadge"><div class="badge-dot"></div>Server Running</div>
+    <div class="badge off" id="connBadge"><div class="badge-dot"></div><span id="connText">Controller Offline</span></div>
     <div class="autostart-wrap">
-      <span class="autostart-label">开机自启</span>
+      <span class="autostart-label">Start on Boot</span>
       <label class="toggle"><input type="checkbox" id="autostartToggle" onchange="toggleAutostart(this.checked)"><span class="toggle-track"></span></label>
     </div>
   </div>
@@ -360,7 +360,7 @@ body::after{
       <!-- ── Stick click ── -->
       <g class="btn-grp" data-id="STICK_CLICK">
         <rect x="108" y="455" width="64" height="18" rx="9" fill="#0c0c26" stroke="rgba(0,240,255,.08)" stroke-width="1"/>
-        <text x="140" y="467" text-anchor="middle" fill="rgba(100,110,150,.5)" font-size="7">摇杆按下</text>
+        <text x="140" y="467" text-anchor="middle" fill="rgba(100,110,150,.5)" font-size="7">Stick Click</text>
       </g>
 
       <!-- ── Side buttons ── -->
@@ -373,14 +373,14 @@ body::after{
         <text x="261" y="230" text-anchor="middle" fill="rgba(150,160,200,.5)" font-size="7" font-weight="700" transform="rotate(-90 261 230)">SR</text>
       </g>
     </svg>
-    <p class="ctrl-hint">手柄示意图 · 点击按钮编辑绑定<br>悬停高亮对应卡片</p>
+    <p class="ctrl-hint">Controller Diagram · Click buttons to edit bindings<br>Hover to highlight matching card</p>
   </div>
 
   <!-- Right: Config Panel -->
   <div class="cfg-panel">
     <div class="cfg-header">
-      <div class="cfg-title">按键映射配置</div>
-      <div class="cfg-desc">点击卡片或手柄按钮编辑绑定 · 保存后重启 mapper 生效</div>
+      <div class="cfg-title">Key Mapping Configuration</div>
+      <div class="cfg-desc">Click a card or controller button to edit binding · Restart mapper after saving</div>
     </div>
     <div id="configCards"></div>
   </div>
@@ -390,13 +390,13 @@ body::after{
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
 <div class="modal">
   <div class="modal-head">
-    <h2 id="modalTitle">编辑按键</h2>
+    <h2 id="modalTitle">Edit Key</h2>
     <button class="modal-close" onclick="closeModal()">&times;</button>
   </div>
   <div id="modalBody"></div>
   <div class="modal-actions">
-    <button class="btn btn-primary" onclick="saveFromModal()">保存</button>
-    <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveFromModal()">Save</button>
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
   </div>
 </div>
 </div>
@@ -407,61 +407,61 @@ body::after{
 <script>
 // ── Options ──
 const MOD_OPTIONS = [
-  {v:"",l:"无修饰键"},{v:"cmd",l:"⌘ Command"},{v:"cmd+shift",l:"⌘+⇧ Cmd+Shift"},
+  {v:"",l:"No Modifier"},{v:"cmd",l:"⌘ Command"},{v:"cmd+shift",l:"⌘+⇧ Cmd+Shift"},
   {v:"cmd+alt",l:"⌘+⌥ Cmd+Option"},{v:"shift",l:"⇧ Shift"},{v:"alt",l:"⌥ Option"},
   {v:"ctrl",l:"⌃ Control"},{v:"cmd+ctrl",l:"⌘+⌃ Cmd+Ctrl"},
 ];
 const HOLD_OPTIONS = [
-  {v:"cmd_r",l:"右 Command ⌘"},{v:"cmd_l",l:"左 Command ⌘"},
-  {v:"shift_r",l:"右 Shift ⇧"},{v:"alt_r",l:"右 Option ⌥"},
-  {v:"ctrl_r",l:"右 Control ⌃"},{v:"cmd_r+alt_r",l:"右⌘ + 右⌥"},
-  {v:"cmd_r+shift_r",l:"右⌘ + 右⇧"},{v:"shift_r+alt_r",l:"右⇧ + 右⌥"},
+  {v:"cmd_r",l:"Right Command ⌘"},{v:"cmd_l",l:"Left Command ⌘"},
+  {v:"shift_r",l:"Right Shift ⇧"},{v:"alt_r",l:"Right Option ⌥"},
+  {v:"ctrl_r",l:"Right Control ⌃"},{v:"cmd_r+alt_r",l:"Right ⌘ + Right ⌥"},
+  {v:"cmd_r+shift_r",l:"Right ⌘ + Right ⇧"},{v:"shift_r+alt_r",l:"Right ⇧ + Right ⌥"},
 ];
 const KEY_OPTIONS = [
   {v:"enter",l:"Enter ↵"},{v:"tab",l:"Tab ⇥"},{v:"esc",l:"Escape"},
-  {v:"backspace",l:"Backspace ⌫"},{v:"delete",l:"Delete ⌦"},{v:"space",l:"Space 空格"},
-  {v:"up",l:"↑ 上"},{v:"down",l:"↓ 下"},{v:"left",l:"← 左"},{v:"right",l:"→ 右"},
+  {v:"backspace",l:"Backspace ⌫"},{v:"delete",l:"Delete ⌦"},{v:"space",l:"Space"},
+  {v:"up",l:"↑ Up"},{v:"down",l:"↓ Down"},{v:"left",l:"← Left"},{v:"right",l:"→ Right"},
   {v:"page_up",l:"Page Up"},{v:"page_down",l:"Page Down"},
   ...Array.from({length:26},(_,i)=>({v:String.fromCharCode(97+i),l:String.fromCharCode(65+i)})),
   ...Array.from({length:10},(_,i)=>({v:String(i),l:String(i)})),
   ...Array.from({length:12},(_,i)=>({v:"f"+(i+1),l:"F"+(i+1)})),
 ];
 const STICK_OPTIONS = [
-  {v:"up",l:"↑ 上"},{v:"down",l:"↓ 下"},{v:"left",l:"← 左"},{v:"right",l:"→ 右"},
+  {v:"up",l:"↑ Up"},{v:"down",l:"↓ Down"},{v:"left",l:"← Left"},{v:"right",l:"→ Right"},
   {v:"page_up",l:"Page Up"},{v:"page_down",l:"Page Down"},
 ];
 
 const GROUPS = [
-  {title:"修饰键（按住不放）",ids:["R","ZR"],kind:"hold"},
-  {title:"正面按钮",ids:["A","B","X","Y"],kind:"press"},
-  {title:"系统按钮",ids:["PLUS","MINUS","HOME","STICK_CLICK"],kind:"press"},
-  {title:"侧键",ids:["SL","SR"],kind:"press"},
-  {title:"摇杆方向",ids:["stick_left","stick_right"],kind:"stick"},
+  {title:"Modifier Keys (Hold)",ids:["R","ZR"],kind:"hold"},
+  {title:"Face Buttons",ids:["A","B","X","Y"],kind:"press"},
+  {title:"System Buttons",ids:["PLUS","MINUS","HOME","STICK_CLICK"],kind:"press"},
+  {title:"Side Buttons",ids:["SL","SR"],kind:"press"},
+  {title:"Stick Directions",ids:["stick_left","stick_right"],kind:"stick"},
 ];
 
 const NAMES = {
-  R:{name:"R",sub:"肩键",note:"Typeless 语音"},
-  ZR:{name:"ZR",sub:"扳机",note:"双修饰"},
-  A:{name:"A",sub:"大按钮",note:"确认/发送"},
-  B:{name:"B",sub:"下方",note:"撤销"},
-  X:{name:"X",sub:"上方",note:"删除"},
-  Y:{name:"Y",sub:"左方",note:"取消/退出"},
-  PLUS:{name:"PLUS (+)",sub:"加号",note:"接受补全"},
-  MINUS:{name:"MINUS (−)",sub:"减号",note:"全选"},
-  HOME:{name:"HOME",sub:"主页",note:"点按循环切换应用"},
-  STICK_CLICK:{name:"摇杆按下",sub:"点击",note:""},
-  SL:{name:"SL",sub:"左侧",note:"复制"},
-  SR:{name:"SR",sub:"右侧",note:"粘贴"},
-  stick_left:{name:"摇杆推左",sub:"X轴",note:"上一选项"},
-  stick_right:{name:"摇杆推右",sub:"X轴",note:"下一选项"},
+  R:{name:"R",sub:"Bumper",note:"Typeless Voice"},
+  ZR:{name:"ZR",sub:"Trigger",note:"Double Modifier"},
+  A:{name:"A",sub:"Main Button",note:"Confirm/Send"},
+  B:{name:"B",sub:"Bottom",note:"Undo"},
+  X:{name:"X",sub:"Top",note:"Delete"},
+  Y:{name:"Y",sub:"Left",note:"Cancel/Exit"},
+  PLUS:{name:"PLUS (+)",sub:"Plus",note:"Accept Completion"},
+  MINUS:{name:"MINUS (−)",sub:"Minus",note:"Select All"},
+  HOME:{name:"HOME",sub:"Home",note:"Tap to cycle apps"},
+  STICK_CLICK:{name:"Stick Click",sub:"Click",note:""},
+  SL:{name:"SL",sub:"Left Side",note:"Copy"},
+  SR:{name:"SR",sub:"Right Side",note:"Paste"},
+  stick_left:{name:"Stick Left",sub:"X-axis",note:"Previous Option"},
+  stick_right:{name:"Stick Right",sub:"X-axis",note:"Next Option"},
 };
 
 // ── Key display helpers ──
 const KEY_DISPLAY = {
   enter:"Enter",tab:"Tab",esc:"Esc",backspace:"Backspace",delete:"Del",space:"Space",
   up:"↑",down:"↓",left:"←",right:"→",page_up:"PgUp",page_down:"PgDn",
-  cmd:"⌘",cmd_l:"左⌘",cmd_r:"右⌘",shift:"⇧",shift_l:"左⇧",shift_r:"右⇧",
-  alt:"⌥",alt_l:"左⌥",alt_r:"右⌥",ctrl:"⌃",ctrl_l:"左⌃",ctrl_r:"右⌃",
+  cmd:"⌘",cmd_l:"L⌘",cmd_r:"R⌘",shift:"⇧",shift_l:"L⇧",shift_r:"R⇧",
+  alt:"⌥",alt_l:"L⌥",alt_r:"R⌥",ctrl:"⌃",ctrl_l:"L⌃",ctrl_r:"R⌃",
 };
 function displayName(v){return KEY_DISPLAY[v]||v.toUpperCase()}
 
@@ -551,32 +551,32 @@ function openModal(id){
   const title=document.getElementById("modalTitle");
   const body=document.getElementById("modalBody");
   const n=NAMES[id];
-  title.textContent=`编辑 ${n?n.name:id}`;
+  title.textContent=`Edit ${n?n.name:id}`;
 
   let h="";
   if(id==="R"||id==="ZR"){
     const cur=(config.modifiers&&config.modifiers[id])||[];
     const curVal=cur.join("+");
-    h+=`<div class="modal-field"><label class="modal-label">按住触发的修饰键</label>`;
+    h+=`<div class="modal-field"><label class="modal-label">Modifier Key (Hold)</label>`;
     h+=sel(HOLD_OPTIONS,curVal,"","holdSel");
     h+=`</div>`;
-    h+=`<p style="font-size:11px;color:var(--txt3);line-height:1.6">按住此键时，其他按钮自动叠加该修饰键。如 R=右⌘，则 R+A = 右⌘+Enter。</p>`;
+    h+=`<p style="font-size:11px;color:var(--txt3);line-height:1.6">While holding this key, other buttons automatically include this modifier. e.g. R=Right ⌘, then R+A = Right ⌘+Enter.</p>`;
   } else if(id==="stick_left"||id==="stick_right"){
     const dir=id==="stick_left"?"left":"right";
     const cur=(config.stick&&config.stick[dir])||"up";
-    h+=`<div class="modal-field"><label class="modal-label">推${dir==="left"?"左":"右"}触发的按键</label>`;
+    h+=`<div class="modal-field"><label class="modal-label">Key Triggered on Push ${dir==="left"?"Left":"Right"}</label>`;
     h+=sel(STICK_OPTIONS,cur,"","stickSel");
     h+=`</div>`;
   } else {
     const btn=(config.buttons&&config.buttons[id])||{modifiers:[],key:"enter"};
     const modVal=btn.modifiers.join("+")||"";
-    h+=`<div class="modal-field"><label class="modal-label">修饰键（可选）</label>`;
+    h+=`<div class="modal-field"><label class="modal-label">Modifier (Optional)</label>`;
     h+=sel(MOD_OPTIONS,modVal,"","modSel");
     h+=`</div>`;
-    h+=`<div class="modal-field"><label class="modal-label">主键</label>`;
+    h+=`<div class="modal-field"><label class="modal-label">Main Key</label>`;
     h+=sel(KEY_OPTIONS,btn.key,"","keySel");
     h+=`</div>`;
-    h+=`<p style="font-size:11px;color:var(--txt3);line-height:1.6">修饰键 + 主键 = 组合键（如 ⌘+Z = 撤销）。不选修饰键 = 单键。</p>`;
+    h+=`<p style="font-size:11px;color:var(--txt3);line-height:1.6">Modifier + Main Key = Combo (e.g. ⌘+Z = Undo). No modifier = single key.</p>`;
   }
   body.innerHTML=h;
   overlay.classList.add("show");
@@ -613,9 +613,9 @@ function saveFromModal(){
 async function saveToServer(){
   try{
     const res=await fetch("/api/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(config,null,2)});
-    if(res.ok) showToast("✓ 配置已保存！重启 mapper 生效",false);
-    else showToast("✗ 保存失败",true);
-  }catch(e){showToast("✗ 无法连接服务器",true)}
+    if(res.ok) showToast("✓ Config saved! Restart mapper to apply",false);
+    else showToast("✗ Save failed",true);
+  }catch(e){showToast("✗ Cannot connect to server",true)}
   renderCards();
 }
 
@@ -637,12 +637,12 @@ async function toggleAutostart(enable){
     const r=await fetch("/api/autostart/"+(enable?"enable":"disable"),{method:"POST"});const d=await r.json();
     if(r.ok) showToast("✓ "+d.message,false);
     else{showToast("✗ "+d.error,true);t.checked=!enable}
-  }catch(e){showToast("✗ 无法连接服务器",true);t.checked=!enable}
+  }catch(e){showToast("✗ Cannot connect to server",true);t.checked=!enable}
   t.disabled=false;
 }
 
 // ── Connection status ──
-const CONN_LABELS={connected:"手柄已连接",waiting:"连接中…",disconnected:"已断开",stale:"信号弱",stopped:"已停止",offline:"手柄离线"};
+const CONN_LABELS={connected:"Controller Connected",waiting:"Connecting…",disconnected:"Disconnected",stale:"Weak Signal",stopped:"Stopped",offline:"Controller Offline"};
 async function pollStatus(){
   try{
     const r=await fetch("/api/status");const d=await r.json();
@@ -652,7 +652,7 @@ async function pollStatus(){
     if(s==="connected"){b.className="badge ok"}
     else if(s==="waiting"||s==="stale"){b.className="badge warn"}
     else{b.className="badge off"}
-  }catch(e){document.getElementById("connText").textContent="状态未知"}
+  }catch(e){document.getElementById("connText").textContent="Status Unknown"}
 }
 setInterval(pollStatus,3000);
 
@@ -663,7 +663,7 @@ async function init(){
     document.getElementById("serverBadge").className="badge ok";
   }catch(e){
     document.getElementById("serverBadge").className="badge off";
-    document.getElementById("serverBadge").innerHTML='<div class="badge-dot"></div>服务器未连接';
+    document.getElementById("serverBadge").innerHTML='<div class="badge-dot"></div>Server Not Connected';
   }
   renderCards();checkAutostart();pollStatus();
 }
