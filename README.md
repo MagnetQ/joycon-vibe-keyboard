@@ -289,6 +289,10 @@ This is a personal-use tool, but contributions are welcome! Areas that could use
 - Better error handling and logging
 - More comprehensive test coverage
 
+## Built With
+
+This entire project was developed using [QoderWork](https://qoder.com/qoderwork) — a desktop AI coding assistant — powered by the [Qwen](https://qwen.ai) large language model. From initial HID reverse-engineering to the cyberpunk web UI, every line of code was written through AI-assisted vibe coding.
+
 ## License
 
 [MIT](LICENSE)
