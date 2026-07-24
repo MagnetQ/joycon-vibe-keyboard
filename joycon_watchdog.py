@@ -28,7 +28,7 @@ import json
 import shutil
 
 VENDOR_ID = 0x057e
-PRODUCT_ID = 0x2006
+PRODUCT_IDS = (0x2007, 0x2006)
 CHECK_INTERVAL = 30      # seconds between checks when connected
 RECONNECT_INTERVAL = 10  # seconds between reconnect attempts when disconnected
 BLUEUTIL_PATH = shutil.which("blueutil") or "/opt/homebrew/bin/blueutil"
@@ -93,8 +93,7 @@ def find_joycon_address():
 def is_joycon_hid_present():
     """Check if Joy-Con is visible via HID enumerate."""
     try:
-        devices = hid.enumerate(VENDOR_ID, PRODUCT_ID)
-        return len(devices) > 0
+        return any(hid.enumerate(VENDOR_ID, pid) for pid in PRODUCT_IDS)
     except Exception:
         return False
 
@@ -163,7 +162,7 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
 
     log("Joy-Con Watchdog started.")
-    log(f"  Vendor: 0x{VENDOR_ID:04x}, Product: 0x{PRODUCT_ID:04x}")
+    log(f"  Vendor: 0x{VENDOR_ID:04x}, Products: {[hex(p) for p in PRODUCT_IDS]}")
     log(f"  Check interval: {CHECK_INTERVAL}s (connected), {RECONNECT_INTERVAL}s (reconnecting)")
     log(f"  blueutil: {'available' if blueutil_available() else 'NOT installed'}")
     addr = find_joycon_address()

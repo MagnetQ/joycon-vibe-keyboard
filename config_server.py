@@ -93,7 +93,7 @@ class ConfigHandler(SimpleHTTPRequestHandler):
             if state in ("offline", "stale"):
                 try:
                     import hid as _hid
-                    devices = _hid.enumerate(0x057e, 0x2006)
+                    devices = _hid.enumerate(0x057e, 0x2007) + _hid.enumerate(0x057e, 0x2006)
                     if devices:
                         state = "connected"
                         ts = time.time()

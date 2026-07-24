@@ -218,7 +218,8 @@ def load_config():
 
 # ─── Joy-Con HID Constants ───────────────────────────────────────────────────
 VENDOR_ID = 0x057e
-PRODUCT_ID = 0x2006
+# 0x2007 = Joy-Con (R) 原厂; 0x2006 是 Joy-Con (L) 的 PID,部分副厂右手柄会伪装成它
+PRODUCT_IDS = (0x2007, 0x2006)
 
 STICK_DEADZONE = 600
 STICK_CENTER = 2048
@@ -252,13 +253,26 @@ def key_display_name(k):
 
 
 def connect_joycon():
-    """Try to connect to Joy-Con, return device or None."""
-    device = hid.device()
+    """Try to connect to Joy-Con (R), return device or None."""
+    for pid in PRODUCT_IDS:
+        device = hid.device()
+        try:
+            device.open(VENDOR_ID, pid)
+            return device
+        except Exception:
+            continue
+    return None
+
+
+def enable_standard_report_mode(device):
+    """原厂 Joy-Con 默认发 0x3f 报告,需发 subcommand 切到 0x30 标准模式才能读到按键."""
+    cmd = bytes([0x01, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0x03, 0x30])
     try:
-        device.open(VENDOR_ID, PRODUCT_ID)
-        return device
+        device.write(cmd)
+        time.sleep(0.1)
+        return True
     except Exception:
-        return None
+        return False
 
 
 def release_all_keys(keyboard, modifiers, stick, stick_state):
@@ -355,6 +369,7 @@ def main():
             last_heartbeat = time.time()
 
             device.set_nonblocking(True)
+            enable_standard_report_mode(device)
             prev_buttons = {name: False for name in BUTTON_BITS}
             stick_state = {d: False for d in STICK}
             no_data_count = 0
@@ -431,15 +446,16 @@ def main():
                         prev_buttons[name] = is_pressed
 
                     # ── Analog stick ──
-                    # X axis: ((data[10] & 0x0F) << 8) | data[9]
-                    # Only X axis works on this hardware (Y axis dead)
+                    # X 轴: data[9] | ((data[10] & 0x0F) << 8), 左推减小/右推增大
+                    # Y 轴: ((data[10] & 0xF0) >> 4) | (data[11] << 4), 上推减小/下推增大
                     if STICK:
-                        stick_x = ((data[10] & 0x0F) << 8) | data[9]
+                        stick_x = data[9] | ((data[10] & 0x0F) << 8)
+                        stick_y = ((data[10] & 0xF0) >> 4) | (data[11] << 4)
 
-                        # "left" direction = stick pushed left (value < center)
-                        # "right" direction = stick pushed right (value > center)
                         want_left = stick_x < STICK_CENTER - STICK_DEADZONE
                         want_right = stick_x > STICK_CENTER + STICK_DEADZONE
+                        want_up = stick_y < STICK_CENTER - STICK_DEADZONE
+                        want_down = stick_y > STICK_CENTER + STICK_DEADZONE
 
                         if "left" in STICK:
                             key = STICK["left"]
@@ -458,6 +474,24 @@ def main():
                             elif not want_right and stick_state.get("right"):
                                 keyboard.release(key)
                             stick_state["right"] = want_right
+
+                        if "up" in STICK:
+                            key = STICK["up"]
+                            if want_up and not stick_state.get("up"):
+                                keyboard.press(key)
+                                print(f"  [STICK] ↑ -> {key_display_name(key)}")
+                            elif not want_up and stick_state.get("up"):
+                                keyboard.release(key)
+                            stick_state["up"] = want_up
+
+                        if "down" in STICK:
+                            key = STICK["down"]
+                            if want_down and not stick_state.get("down"):
+                                keyboard.press(key)
+                                print(f"  [STICK] ↓ -> {key_display_name(key)}")
+                            elif not want_down and stick_state.get("down"):
+                                keyboard.release(key)
+                            stick_state["down"] = want_down
 
             except OSError:
                 print("\n[!] Joy-Con connection lost.")

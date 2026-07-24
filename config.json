@@ -54,7 +54,9 @@
     }
   },
   "stick": {
-    "left": "up",
-    "right": "down"
+    "left": "left",
+    "right": "right",
+    "up": "up",
+    "down": "down"
   }
 }

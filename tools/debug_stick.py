@@ -13,15 +13,20 @@ import sys
 import time
 
 VENDOR_ID = 0x057e
-PRODUCT_ID = 0x2006
+PRODUCT_IDS = (0x2007, 0x2006)
 
 
 def main():
-    device = hid.device()
-    try:
-        device.open(VENDOR_ID, PRODUCT_ID)
-    except Exception as e:
-        print(f"Cannot open Joy-Con: {e}")
+    device = None
+    for pid in PRODUCT_IDS:
+        device = hid.device()
+        try:
+            device.open(VENDOR_ID, pid)
+            break
+        except Exception:
+            device = None
+    if device is None:
+        print("Cannot open Joy-Con (tried both PIDs).")
         print("Make sure it's connected via Bluetooth.")
         sys.exit(1)
 
@@ -34,6 +39,9 @@ def main():
     print("-" * 60)
 
     device.set_nonblocking(True)
+    # 原厂 Joy-Con 默认发 0x3f,激活到 0x30 标准模式
+    device.write(bytes([0x01, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0x03, 0x30]))
+    time.sleep(0.1)
     prev = None
 
     try:
