@@ -311,7 +311,7 @@ Steps:
 5. Start the mapper: python3 joycon_mapper.py
 6. (Optional) Start the web config UI: python3 config_server.py, then open http://localhost:8766
 
-After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe coding. The default mappings are: A=Enter, B=Cmd+Z undo, X=Backspace, Y=Escape, PLUS=Tab, stick left/right=arrow keys. R and ZR are hold-modifier buttons.</div>
+After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe coding. The default mappings are: A=Enter, B=Cmd+Z undo, X=Backspace, Y=Escape, PLUS=Tab, SL=Ctrl+Cmd+Q lock screen, stick 4-way=arrow keys (left/right/up/down). R/ZR/SR are hold-modifier buttons.</div>
     </div>
     <p class="prompt-hint">Copy this prompt and paste it into <a href="https://qoder.com/qoderwork" style="color:var(--neon)">QoderWork</a>, Claude, Cursor, or any AI coding assistant.<br>The AI will handle the entire installation process for you.</p>
   </div>
@@ -322,7 +322,7 @@ After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe
   <div class="container">
     <div class="stats-grid">
       <div><div class="stat-num">~500</div><div class="stat-label">Lines of Python</div></div>
-      <div><div class="stat-num">14</div><div class="stat-label">Button Mappings</div></div>
+      <div><div class="stat-num">16</div><div class="stat-label">Button Mappings</div></div>
       <div><div class="stat-num">4ms</div><div class="stat-label">Polling Interval</div></div>
       <div><div class="stat-num">0</div><div class="stat-label">Dependencies*</div></div>
     </div>
@@ -358,7 +358,7 @@ After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe
       <div class="feature-card">
         <div class="feature-icon cyan">🕹️</div>
         <h3>Analog Stick Mapping</h3>
-        <p>Push the stick left/right to trigger arrow keys. Perfect for navigating AI code suggestions without touching the keyboard.</p>
+        <p>Push the stick left/right/up/down to trigger arrow keys in all four directions. Perfect for navigating AI code suggestions without touching the keyboard.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon pink">📡</div>
@@ -390,16 +390,17 @@ After setup, my Joy-Con (R) will work as a one-handed shortcut keyboard for vibe
           <tr><th>Button</th><th>Keyboard</th><th>Use Case</th></tr>
         </thead>
         <tbody>
-          <tr><td>R (hold)</td><td>Right ⌘</td><td>Trigger voice input</td></tr>
+          <tr><td>R (hold)</td><td>Right ⌘</td><td>Modifier key</td></tr>
           <tr><td>ZR (hold)</td><td>Right ⌘ + ⌥</td><td>Secondary modifier</td></tr>
+          <tr><td>SR (hold)</td><td>Right ⌥</td><td>Voice input trigger</td></tr>
           <tr><td>A</td><td>Enter</td><td>Confirm / send</td></tr>
           <tr><td>B</td><td>⌘+Z</td><td>Undo</td></tr>
           <tr><td>X</td><td>Backspace</td><td>Delete</td></tr>
           <tr><td>Y</td><td>Escape</td><td>Cancel / exit</td></tr>
           <tr><td>PLUS</td><td>Tab</td><td>Accept AI completion</td></tr>
           <tr><td>HOME</td><td>⌘ + Tab/tap</td><td>Cycle apps</td></tr>
-          <tr><td>SL</td><td>c</td><td>⌘+C copy (with R)</td></tr>
-          <tr><td>Stick ←/→</td><td>↑ / ↓</td><td>Navigate suggestions</td></tr>
+          <tr><td>SL</td><td>⌃+⌘+Q</td><td>Lock screen</td></tr>
+          <tr><td>Stick ←/→/↑/↓</td><td>← / → / ↑ / ↓</td><td>Navigate in all directions</td></tr>
         </tbody>
       </table>
     </div>
