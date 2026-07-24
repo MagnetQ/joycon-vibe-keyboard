@@ -49,8 +49,8 @@
       "key": "d"
     },
     "SL": {
-      "modifiers": [],
-      "key": "c"
+      "modifiers": ["ctrl", "cmd"],
+      "key": "q"
     }
   },
   "stick": {
